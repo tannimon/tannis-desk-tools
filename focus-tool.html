@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus & Sound — Tanni's Desk Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6b4ab0; --purple2:#8b6fcc; --purple3:#a98fdc;
+  --purple4:#c4adec; --purple-pale:#f3f0ff; --purple-mid:#ddd4f8; --purple-deep:#3a2070;
+  --canvas:#f5f3ff; --card-bg:#ffffff; --card-border:#e8e3f8;
+  --card-hover-border:#a98fdc; --ink:#160e2c; --ink-mid:#3d2f6b; --ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+  --radius:10px;
+  --green:#166534; --red:#9b1c1c; --amber:#8a5200; --blue:#1d6fa4;
+}
+html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{background:var(--canvas);color:var(--ink);font-size:15px;line-height:1.6;min-height:100vh;}
+
+/* HEADER */
+.tool-header{position:sticky;top:0;z-index:50;background:var(--purple);padding:0 20px;height:56px;display:flex;align-items:center;gap:14px;}
+.hbadge{font-family:var(--mono);font-size:11px;font-weight:500;background:rgba(255,255,255,.18);color:#fff;padding:3px 9px;border-radius:5px;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;}
+.htitle{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px;}
+.hsub{font-size:12px;color:rgba(255,255,255,.6);margin-left:auto;white-space:nowrap;}
+
+/* TABS */
+.tab-bar{position:sticky;top:56px;z-index:40;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 20px;}
+.tab{padding:12px 18px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:7px;}
+.tab i{font-size:17px;}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+.tab:hover:not(.active){color:var(--ink-mid);}
+
+/* PAGES */
+.page{display:none;padding:24px 20px 48px;max-width:720px;margin:0 auto;animation:fadeUp .22s ease both;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* CARDS */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.card-title i{font-size:16px;color:var(--purple3);}
+
+/* TIMER RING */
+.timer-center{display:flex;flex-direction:column;align-items:center;gap:20px;padding:8px 0 4px;}
+.ring-wrap{position:relative;width:220px;height:220px;flex-shrink:0;}
+.ring-wrap svg{width:220px;height:220px;transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--purple-mid);stroke-width:10;}
+.ring-prog{fill:none;stroke:var(--purple);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .8s linear,stroke .4s;}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.timer-display{font-family:var(--mono);font-size:40px;font-weight:500;color:var(--ink);letter-spacing:-1px;line-height:1;}
+.timer-phase{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--purple3);}
+.timer-session-label{font-size:12.5px;color:var(--ink-soft);font-style:italic;text-align:center;min-height:20px;max-width:200px;line-height:1.4;}
+
+/* TIMER CONTROLS */
+.timer-controls{display:flex;gap:10px;align-items:center;justify-content:center;}
+.btn{border:none;cursor:pointer;border-radius:8px;font-family:var(--font);font-weight:600;transition:opacity .15s,transform .1s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--purple);color:#fff;padding:10px 28px;font-size:14px;}
+.btn-ghost{background:var(--purple-pale);color:var(--purple);padding:10px 18px;font-size:14px;border:1.5px solid var(--purple-mid);}
+.btn-icon{background:var(--purple-pale);color:var(--purple);padding:9px 12px;font-size:14px;border:1.5px solid var(--purple-mid);display:flex;align-items:center;gap:6px;}
+.btn-icon i{font-size:18px;}
+
+/* PRESETS */
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.preset{font-family:var(--mono);font-size:11.5px;font-weight:500;background:var(--purple-pale);color:var(--purple);border:1.5px solid var(--purple-mid);border-radius:6px;padding:5px 12px;cursor:pointer;transition:background .15s,border-color .15s;}
+.preset:hover,.preset.active-preset{background:var(--purple-mid);border-color:var(--purple3);}
+
+/* LABEL INPUT */
+.label-row{display:flex;gap:10px;align-items:center;}
+.label-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13.5px;color:var(--ink);padding:0 12px;outline:none;background:#fff;transition:border-color .15s;}
+.label-row input:focus{border-color:var(--purple3);}
+.label-row input::placeholder{color:var(--ink-soft);}
+
+/* SESSION PIPS */
+.session-row{display:flex;gap:10px;justify-content:center;align-items:center;}
+.session-pip{width:10px;height:10px;border-radius:50%;background:var(--purple-mid);transition:background .3s;}
+.session-pip.done{background:var(--purple);}
+
+/* CALLOUTS */
+.cx{border-radius:var(--radius);padding:14px 16px;font-size:13.5px;line-height:1.6;margin-bottom:12px;}
+.cx.tip{background:var(--purple-pale);border-left:4px solid var(--purple3);color:var(--ink-mid);}
+.cx.info{background:#eff6ff;border-left:4px solid #60a5fa;color:var(--blue);}
+
+/* SOUND CARDS */
+.sound-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.sound-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .2s,box-shadow .2s,background .15s;position:relative;user-select:none;}
+.sound-card:hover{border-color:var(--card-hover-border);}
+.sound-card.playing{border-color:var(--purple);background:var(--purple-pale);box-shadow:0 0 0 3px rgba(107,74,176,.12);}
+.sound-icon{font-size:32px;color:var(--purple3);}
+.sound-card.playing .sound-icon{color:var(--purple);}
+.sound-name{font-size:13px;font-weight:600;color:var(--ink);text-align:center;}
+.sound-status{font-size:11px;color:var(--ink-soft);font-family:var(--mono);}
+.sound-card.playing .sound-status{color:var(--purple2);}
+.playing-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);position:absolute;top:10px;right:10px;animation:pulse-dot 1.4s ease-in-out infinite;display:none;}
+.sound-card.playing .playing-dot{display:block;}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.75);}}
+.sound-missing{opacity:.45;cursor:not-allowed !important;}
+.sound-missing:hover{border-color:var(--border) !important;}
+
+/* VOLUME */
+.vol-row{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.vol-row i{font-size:18px;color:var(--purple3);}
+.vol-row input[type=range]{flex:1;accent-color:var(--purple);height:4px;cursor:pointer;}
+.vol-val{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);min-width:28px;text-align:right;}
+
+/* ═══════════════════════════════════════
+   CAROUSEL  (shared between preview tab + break overlay)
+═══════════════════════════════════════ */
+.carousel-shell{position:relative;width:100%;max-width:320px;margin:0 auto;}
+.carousel-frame{border-radius:16px;overflow:hidden;width:100%;aspect-ratio:1;background:rgba(107,74,176,.15);position:relative;}
+.carousel-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .55s ease;}
+.carousel-frame img.vis{opacity:1;}
+.carousel-frame .empty-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-soft);text-align:center;padding:20px;}
+.carousel-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.32);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .15s;z-index:2;flex-shrink:0;}
+.carousel-nav:hover{background:rgba(0,0,0,.55);}
+.carousel-nav.prev{left:8px;}
+.carousel-nav.next{right:8px;}
+.carousel-dots{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+.c-dot{width:7px;height:7px;border-radius:50%;background:rgba(107,74,176,.25);cursor:pointer;transition:background .2s;border:none;padding:0;flex-shrink:0;}
+.c-dot.on{background:var(--purple);}
+
+/* override dot colors on dark break overlay */
+.break-overlay .c-dot{background:rgba(255,255,255,.3);}
+.break-overlay .c-dot.on{background:#fff;}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--purple3);border-radius:var(--radius);padding:28px 20px;text-align:center;cursor:pointer;color:var(--purple2);transition:background .15s,border-color .15s;font-size:13.5px;}
+.upload-zone:hover{background:var(--purple-pale);border-color:var(--purple);}
+.upload-zone i{font-size:28px;display:block;margin-bottom:6px;color:var(--purple3);}
+.upload-zone span{font-weight:600;color:var(--purple);}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:12px;}
+.photo-thumb{border-radius:8px;overflow:hidden;aspect-ratio:1;position:relative;border:2px solid var(--border);background:var(--purple-pale);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-remove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;font-size:10px;opacity:0;transition:opacity .15s;}
+.photo-thumb:hover .photo-remove{opacity:1;}
+
+/* BREAK OVERLAY */
+.break-overlay{display:none;position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,var(--purple-deep) 0%,var(--purple) 100%);flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:28px 20px;overflow-y:auto;}
+.break-overlay.show{display:flex;animation:fadeIn .5s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.break-title{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.4px;text-align:center;}
+.break-timer{font-family:var(--mono);font-size:52px;font-weight:500;color:#fff;letter-spacing:-2px;line-height:1;}
+.break-tip{background:rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;font-size:13.5px;color:rgba(255,255,255,.85);max-width:340px;text-align:left;line-height:1.6;}
+.break-tip .tip-category{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:5px;}
+.break-session-lbl{font-size:13px;color:rgba(255,255,255,.55);text-align:left;max-width:340px;}
+
+/* CUSTOM TIMER INPUTS */
+.time-inputs{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.time-field{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.time-field label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-soft);}
+.time-field input[type=number]{width:68px;height:40px;border:1.5px solid var(--border);border-radius:8px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:500;color:var(--ink);outline:none;background:#fff;transition:border-color .15s;}
+.time-field input[type=number]:focus{border-color:var(--purple3);}
+
+/* MISC */
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.text-sm{font-size:13px;color:var(--ink-soft);}
+.text-xs{font-size:11.5px;color:var(--ink-soft);font-family:var(--mono);}
+.fw7{font-weight:700;}
+
+@media(max-width:480px){
+  .sound-grid{grid-template-columns:repeat(2,1fr);}
+  .timer-display{font-size:34px;}
+  .ring-wrap{width:180px;height:180px;}
+  .ring-wrap svg{width:180px;height:180px;}
+  .break-timer{font-size:40px;}
+}
+
+/* ── WORK JAMS ── */
+.jam-row{border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--card-bg);transition:border-color .2s,background .15s;}
+.jam-row.jam-playing{border-color:var(--purple);background:var(--purple-pale);}
+.jam-row.jam-missing{opacity:.45;}
+.jam-top{display:flex;align-items:center;gap:12px;}
+.jam-play{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--purple);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s,transform .1s;}
+.jam-play:active{transform:scale(.94);}
+.jam-row.jam-playing .jam-play{background:var(--purple-deep);}
+.jam-row.jam-missing .jam-play{background:var(--border);cursor:not-allowed;}
+.jam-info{flex:1;min-width:0;}
+.jam-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.jam-row.jam-playing .jam-title{color:var(--purple);}
+.jam-meta{font-size:11.5px;color:var(--ink-soft);font-family:var(--mono);margin-top:2px;}
+.jam-time{font-size:11.5px;font-family:var(--mono);color:var(--ink-soft);flex-shrink:0;min-width:72px;text-align:right;}
+.jam-progress-wrap{margin-top:10px;display:none;}
+.jam-row.jam-playing .jam-progress-wrap{display:block;}
+.jam-progress{width:100%;height:4px;border-radius:2px;background:var(--purple-mid);-webkit-appearance:none;appearance:none;cursor:pointer;accent-color:var(--purple);}
+</style>
+</head>
+<body>
+
+<div class="tool-header">
+  <span class="hbadge">FOCUS</span>
+  <span class="htitle">Focus &amp; Sound</span>
+  <span class="hsub">Timer · Ambient · Break</span>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('timer')" id="tab-timer"><i class="ph-bold ph-timer"></i> Timer</button>
+  <button class="tab" onclick="showTab('sound')" id="tab-sound"><i class="ph-bold ph-speaker-high"></i> Sound</button>
+  <button class="tab" onclick="showTab('photos')" id="tab-photos"><i class="ph-bold ph-dog"></i> Pup Photos</button>
+</div>
+
+<!-- ══ TIMER TAB ══ -->
+<div class="page active" id="page-timer">
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-clock"></i> Session</div>
+    <div class="label-row" style="margin-bottom:16px;">
+      <input type="text" id="sessionLabel" placeholder="What are you working on? (e.g. STK batch – Q2)" maxlength="60">
+    </div>
+    <div class="timer-center">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 220 220">
+          <circle class="ring-bg" cx="110" cy="110" r="96"/>
+          <circle class="ring-prog" id="ringProg" cx="110" cy="110" r="96" stroke-dasharray="603.19" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-inner">
+          <div class="timer-display" id="timerDisplay">45:00</div>
+          <div class="timer-phase" id="timerPhase">FOCUS</div>
+        </div>
+      </div>
+      <div class="timer-session-label" id="timerLabelDisplay">Set a label above to start</div>
+      <div class="timer-controls">
+        <button class="btn btn-icon" onclick="resetTimer()" title="Reset"><i class="ph-bold ph-arrow-counter-clockwise"></i></button>
+        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()" style="min-width:100px;">Start</button>
+        <button class="btn btn-icon" onclick="skipPhase()" title="Skip phase"><i class="ph-bold ph-skip-forward"></i></button>
+      </div>
+      <div>
+        <div class="session-row" id="sessionPips"></div>
+        <div class="text-xs" style="text-align:center;margin-top:6px;" id="sessionCountLabel">Session 1 of 4</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-sliders"></i> Intervals</div>
+    <div style="margin-bottom:14px;">
+      <div class="preset-row" id="presetRow">
+        <button class="preset active-preset" onclick="applyPreset(45,10,this)">45 / 10</button>
+        <button class="preset" onclick="applyPreset(25,5,this)">25 / 5</button>
+        <button class="preset" onclick="applyPreset(52,17,this)">52 / 17</button>
+        <button class="preset" onclick="applyPreset(60,15,this)">60 / 15</button>
+        <button class="preset" onclick="applyPreset(90,20,this)">90 / 20</button>
+      </div>
+    </div>
+    <div class="divider" style="margin:10px 0;"></div>
+    <div class="text-sm fw7" style="margin-bottom:10px;">Custom</div>
+    <div class="time-inputs">
+      <div class="time-field"><label>Focus (min)</label><input type="number" id="customFocus" min="1" max="120" value="45"></div>
+      <div style="font-size:20px;color:var(--ink-soft);margin-top:18px;">/</div>
+      <div class="time-field"><label>Break (min)</label><input type="number" id="customBreak" min="1" max="60" value="10"></div>
+      <button class="btn btn-ghost" style="margin-top:18px;" onclick="applyCustom()">Apply</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-gear"></i> Options</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="autoBreak" checked style="accent-color:var(--purple);width:16px;height:16px;">
+        <span class="text-sm">Automatically start break when focus ends</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="showBreakOverlay" checked style="accent-color:var(--purple);width:16px;height:16px;">
+        <span class="text-sm">Show full-screen break screen with pup photo carousel</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="fadeSound" checked style="accent-color:var(--purple);width:16px;height:16px;">
+        <span class="text-sm">Fade ambient sound down during break</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="cx tip"><strong>No alarm.</strong> When focus time ends, the break screen fades in silently. Just a visual cue — no startling sounds.</div>
+</div>
+
+<!-- ══ SOUND TAB ══ -->
+<div class="page" id="page-sound">
+  <div class="cx info" style="margin-bottom:16px;">
+    <strong>Ambient Sound Library</strong><br>
+    <span style="font-weight:400;">Select a sound to create a calm, distraction-reduced workspace.</span>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-music-note"></i> Ambient Sounds</div>
+    <div class="sound-grid" id="soundGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-microphone-stage"></i> Work Jams</div>
+    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;line-height:1.6;">
+      Clinical quality songs (a day in the life of a core measure abstractor).
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;" id="jamList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-speaker-high"></i> Volume</div>
+    <div class="vol-row">
+      <i class="ph-bold ph-speaker-low"></i>
+      <input type="range" id="volSlider" min="0" max="100" value="40" oninput="setVolume(this.value)">
+      <i class="ph-bold ph-speaker-high"></i>
+      <span class="vol-val" id="volVal">40%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PHOTOS TAB ══ -->
+<div class="page" id="page-photos">
+  <div class="cx tip" style="margin-bottom:16px;">
+    Upload photos of your dog. They'll appear as a slideshow <strong>on the break screen</strong> when your focus session ends. Photos stay in your browser only — nothing is uploaded anywhere.
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ph-bold ph-image"></i> Your Photos</div>
+    <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+      <i class="ph-bold ph-upload-simple"></i>
+      <div><span>Choose photos</span> or click to browse</div>
+      <div class="text-xs" style="margin-top:4px;color:var(--ink-soft);">JPG, PNG, WEBP — any size</div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="addPhotos(this)">
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+
+  <div class="card" id="previewCard" style="display:none;">
+    <div class="card-title"><i class="ph-bold ph-slideshow"></i> Preview carousel</div>
+    <div id="previewCarouselWrap"></div>
+  </div>
+</div>
+
+<!-- ══ BREAK OVERLAY ══ -->
+<div class="break-overlay" id="breakOverlay">
+  <div class="break-title">☕ Time for a break</div>
+
+  <!-- pup carousel lives here on break screen -->
+  <div id="breakCarouselWrap" style="width:100%;max-width:300px;display:none;"></div>
+
+  <div class="break-tip" id="breakTipText"></div>
+  <div class="break-timer" id="breakDisplay">10:00</div>
+
+  <div style="display:flex;gap:12px;">
+    <button class="btn" style="background:rgba(255,255,255,.18);color:#fff;padding:10px 24px;font-size:14px;" onclick="endBreakEarly()">Back to work</button>
+    <button class="btn" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:10px 18px;font-size:13px;" onclick="addBreakTime()">+5 min</button>
+  </div>
+  <div class="break-session-lbl" id="breakSessionLabel"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   TABS
+═══════════════════════════════════════ */
+function showTab(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+/* ═══════════════════════════════════════
+   CAROUSEL ENGINE
+   Works in both the preview tab and the break overlay.
+   Each carousel is an independent object so they don't interfere.
+═══════════════════════════════════════ */
+function makeCarousel(containerEl, photos, opts){
+  // opts: { dark: bool, size: 'large'|'small' }
+  opts = opts || {};
+  containerEl.innerHTML = '';
+  if(!photos.length){
+    containerEl.innerHTML = '<div class="text-sm" style="color:var(--ink-soft);padding:16px 0;text-align:center;">No photos yet — upload some on the Pup Photos tab.</div>';
+    return null;
+  }
+
+  const shell = document.createElement('div');
+  shell.className = 'carousel-shell';
+
+  const frame = document.createElement('div');
+  frame.className = 'carousel-frame';
+  if(opts.size === 'large') frame.style.maxWidth = '300px';
+
+  // Create all img tags
+  const imgs = photos.map((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Pup photo ' + (i+1);
+    if(i === 0) img.classList.add('vis');
+    frame.appendChild(img);
+    return img;
+  });
+
+  // Nav buttons (only if >1 photo)
+  if(photos.length > 1){
+    const prev = document.createElement('button');
+    prev.className = 'carousel-nav prev';
+    prev.innerHTML = '<i class="ph-bold ph-caret-left"></i>';
+    prev.onclick = () => step(-1);
+
+    const next = document.createElement('button');
+    next.className = 'carousel-nav next';
+    next.innerHTML = '<i class="ph-bold ph-caret-right"></i>';
+    next.onclick = () => step(1);
+
+    frame.appendChild(prev);
+    frame.appendChild(next);
+  }
+
+  shell.appendChild(frame);
+
+  // Dots
+  const dotsRow = document.createElement('div');
+  dotsRow.className = 'carousel-dots';
+  const dots = photos.map((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'c-dot' + (i === 0 ? ' on' : '');
+    d.onclick = () => goTo(i);
+    dotsRow.appendChild(d);
+    return d;
+  });
+  if(photos.length > 1) shell.appendChild(dotsRow);
+
+  containerEl.appendChild(shell);
+
+  let cur = 0;
+  let autoT = null;
+
+  function goTo(n){
+    imgs[cur].classList.remove('vis');
+    dots[cur] && dots[cur].classList.remove('on');
+    cur = (n + photos.length) % photos.length;
+    imgs[cur].classList.add('vis');
+    dots[cur] && dots[cur].classList.add('on');
+  }
+  function step(dir){ goTo(cur + dir); }
+  function startAuto(){
+    stopAuto();
+    if(photos.length > 1) autoT = setInterval(() => step(1), 4000);
+  }
+  function stopAuto(){ clearInterval(autoT); }
+
+  return { goTo, startAuto, stopAuto };
+}
+
+/* ═══════════════════════════════════════
+   PHOTOS
+═══════════════════════════════════════ */
+let dogPhotos = [];
+let previewCarousel = null;
+let breakCarousel = null;
+
+function addPhotos(input){
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      dogPhotos.push(e.target.result);
+      loaded++;
+      if(loaded === files.length) refreshPhotoUIs();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removePhoto(idx){
+  dogPhotos.splice(idx, 1);
+  refreshPhotoUIs();
+}
+
+function refreshPhotoUIs(){
+  renderPhotoGrid();
+  renderPreviewCarousel();
+}
+
+function renderPhotoGrid(){
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  dogPhotos.forEach((src, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    const img = document.createElement('img'); img.src = src; img.alt = '';
+    const rm = document.createElement('button');
+    rm.className = 'photo-remove'; rm.textContent = '✕';
+    rm.onclick = e => { e.stopPropagation(); removePhoto(i); };
+    thumb.appendChild(img); thumb.appendChild(rm);
+    grid.appendChild(thumb);
+  });
+}
+
+function renderPreviewCarousel(){
+  const wrap = document.getElementById('previewCarouselWrap');
+  const card = document.getElementById('previewCard');
+  if(dogPhotos.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  previewCarousel = makeCarousel(wrap, dogPhotos, {size:'large'});
+}
+
+/* ═══════════════════════════════════════
+   TIMER STATE
+═══════════════════════════════════════ */
+let focusMins=45, breakMins=10;
+let totalSecs, remainSecs, timerInterval;
+let phase='idle';
+let sessionNum=1, totalSessions=4;
+const CIRCUMFERENCE = 2 * Math.PI * 96;
+const ringProg = document.getElementById('ringProg');
+ringProg.style.strokeDasharray = CIRCUMFERENCE;
+
+function secsToDisplay(s){
+  return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+function setRing(frac){
+  ringProg.style.strokeDashoffset = CIRCUMFERENCE*(1-frac);
+}
+function renderPips(){
+  const c = document.getElementById('sessionPips');
+  c.innerHTML='';
+  for(let i=0;i<totalSessions;i++){
+    const d=document.createElement('div');
+    d.className='session-pip'+(i<sessionNum-1?' done':'');
+    c.appendChild(d);
+  }
+  document.getElementById('sessionCountLabel').textContent=`Session ${sessionNum} of ${totalSessions}`;
+}
+function updateTimerUI(){
+  document.getElementById('timerDisplay').textContent=secsToDisplay(remainSecs);
+  const lbl=document.getElementById('sessionLabel').value.trim();
+  document.getElementById('timerLabelDisplay').textContent=lbl||(phase==='break'?'Break':'Focus session');
+  setRing(remainSecs/totalSecs);
+  document.getElementById('timerPhase').textContent=phase==='break'?'BREAK':'FOCUS';
+  ringProg.style.stroke=phase==='break'?'var(--purple3)':'var(--purple)';
+}
+function toggleTimer(){
+  if(phase==='idle'||phase==='done') startFocus();
+  else if(timerInterval) pauseTimer();
+  else resumeTimer();
+}
+function startFocus(){
+  phase='focus'; totalSecs=focusMins*60; remainSecs=totalSecs;
+  document.getElementById('startBtn').textContent='Pause';
+  renderPips(); updateTimerUI();
+  clearInterval(timerInterval);
+  timerInterval=setInterval(tick,1000);
+  if(document.getElementById('fadeSound').checked) setVolumeFade(1);
+}
+function pauseTimer(){
+  clearInterval(timerInterval); timerInterval=null;
+  document.getElementById('startBtn').textContent='Resume';
+}
+function resumeTimer(){
+  timerInterval=setInterval(tick,1000);
+  document.getElementById('startBtn').textContent='Pause';
+}
+function resetTimer(){
+  clearInterval(timerInterval); timerInterval=null; phase='idle';
+  remainSecs=focusMins*60; totalSecs=focusMins*60; sessionNum=1;
+  document.getElementById('startBtn').textContent='Start';
+  ringProg.style.stroke='var(--purple)';
+  setRing(1);
+  document.getElementById('timerDisplay').textContent=secsToDisplay(remainSecs);
+  document.getElementById('timerPhase').textContent='FOCUS';
+  document.getElementById('timerLabelDisplay').textContent='Set a label above to start';
+  renderPips(); hideBreakOverlay();
+  if(document.getElementById('fadeSound').checked) setVolumeFade(1);
+}
+function skipPhase(){
+  if(phase==='focus') focusDone();
+  else if(phase==='break') breakDone();
+}
+function tick(){
+  remainSecs--;
+  if(remainSecs<=0){ if(phase==='focus') focusDone(); else breakDone(); return; }
+  updateTimerUI();
+  if(phase==='break') document.getElementById('breakDisplay').textContent=secsToDisplay(remainSecs);
+}
+function focusDone(){
+  clearInterval(timerInterval); timerInterval=null;
+  const pips=document.querySelectorAll('.session-pip');
+  if(pips[sessionNum-1]) pips[sessionNum-1].classList.add('done');
+  if(document.getElementById('autoBreak').checked) startBreak();
+  else{ phase='idle'; remainSecs=breakMins*60; totalSecs=breakMins*60; document.getElementById('startBtn').textContent='Start Break'; updateTimerUI(); }
+}
+function startBreak(){
+  phase='break'; totalSecs=breakMins*60; remainSecs=totalSecs; updateTimerUI();
+  if(document.getElementById('showBreakOverlay').checked) showBreakOverlay();
+  if(document.getElementById('fadeSound').checked) setVolumeFade(0.3);
+  timerInterval=setInterval(tick,1000);
+}
+function breakDone(){
+  clearInterval(timerInterval); timerInterval=null; hideBreakOverlay();
+  if(document.getElementById('fadeSound').checked) setVolumeFade(1);
+  if(sessionNum>=totalSessions){
+    phase='done'; sessionNum=1;
+    document.getElementById('startBtn').textContent='Start Again';
+    document.getElementById('timerPhase').textContent='DONE';
+    document.getElementById('timerDisplay').textContent='🎉';
+    setRing(1);
+    document.getElementById('timerLabelDisplay').textContent='All sessions complete!';
+    renderPips();
+  } else {
+    sessionNum++; phase='idle'; remainSecs=focusMins*60; totalSecs=focusMins*60;
+    document.getElementById('startBtn').textContent='Start';
+    renderPips(); updateTimerUI();
+  }
+}
+function endBreakEarly(){
+  clearInterval(timerInterval); timerInterval=null;
+  hideBreakOverlay(); breakDone();
+}
+function addBreakTime(){
+  remainSecs+=300; totalSecs+=300;
+  document.getElementById('breakDisplay').textContent=secsToDisplay(remainSecs);
+}
+function applyPreset(f,b,btn){
+  focusMins=f; breakMins=b;
+  document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active-preset'));
+  btn.classList.add('active-preset');
+  document.getElementById('customFocus').value=f;
+  document.getElementById('customBreak').value=b;
+  if(phase==='idle'){ remainSecs=focusMins*60; totalSecs=focusMins*60; updateTimerUI(); document.getElementById('timerDisplay').textContent=secsToDisplay(remainSecs); }
+}
+function applyCustom(){
+  const f=parseInt(document.getElementById('customFocus').value)||45;
+  const b=parseInt(document.getElementById('customBreak').value)||10;
+  focusMins=Math.max(1,Math.min(120,f)); breakMins=Math.max(1,Math.min(60,b));
+  document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active-preset'));
+  if(phase==='idle'){ remainSecs=focusMins*60; totalSecs=focusMins*60; updateTimerUI(); document.getElementById('timerDisplay').textContent=secsToDisplay(remainSecs); }
+}
+
+/* ═══════════════════════════════════════
+   BREAK OVERLAY
+═══════════════════════════════════════ */
+const BREAK_TIPS=[
+  // Self-care / body
+  {cat:'Self-care', text:'Stand up. Stretch your arms over your head and hold for 10 seconds. Your spine will thank you.'},
+  {cat:'Self-care', text:'Refill your water. Even mild dehydration slows your thinking — your brain is 75% water.'},
+  {cat:'Self-care', text:'Look out a window for 30 seconds. Eyes need distance after staring at a screen.'},
+  {cat:'Self-care', text:'Roll your shoulders back 5 times slowly. Then tilt your ear to each shoulder. Neck tension is sneaky.'},
+  {cat:'Self-care', text:'Take 5 slow, deep breaths. Inhale for 4 counts, hold for 2, exhale for 6. Your nervous system will reset.'},
+  {cat:'Self-care', text:'Blink slowly 10 times. Screens cut your blink rate in half, which is why your eyes feel dry by noon.'},
+  {cat:'Self-care', text:'Wiggle your fingers and shake out your wrists for 30 seconds. Repetitive keywork tension adds up.'},
+  {cat:'Self-care', text:'Eat something small if you\'re hungry. Your brain runs on glucose and it doesn\'t like to be ignored.'},
+  {cat:'Self-care', text:'Step outside for 2 minutes if you can. Natural light resets your circadian rhythm and your mood.'},
+  {cat:'Self-care', text:'Uncross your legs and plant both feet flat on the floor. Check your posture — chin neutral, shoulders back.'},
+  {cat:'Self-care', text:'Splash cold water on your face or wrists. It\'s a fast, legal reset button.'},
+  {cat:'Self-care', text:'Put lotion on your hands. It takes 30 seconds, it\'s pleasant, and it\'s a small act of kindness to yourself.'},
+  {cat:'Self-care', text:'Close your eyes for 60 seconds. No input. Just rest. You don\'t have to think about anything.'},
+  // Empowerment
+  {cat:'You\'ve got this', text:'You just spent 45 minutes doing work that actually matters. That\'s not nothing.'},
+  {cat:'You\'ve got this', text:'Abstraction is hard. It requires sustained attention, clinical judgment, and precision. You do this every day.'},
+  {cat:'You\'ve got this', text:'The data you produce affects real care decisions. Your accuracy is someone\'s safety. That\'s a big deal.'},
+  {cat:'You\'ve got this', text:'You are good at this. The evidence is that you show up and do it, correctly, every single day.'},
+  {cat:'You\'ve got this', text:'Breaks aren\'t slacking — they\'re how you protect your focus for the next session. This is strategic.'},
+  {cat:'You\'ve got this', text:'Every case you complete is one more data point improving care quality for patients you\'ll never meet.'},
+  {cat:'You\'ve got this', text:'You hold a lot of spec knowledge in your head. That took years to build. Be proud of it.'},
+  {cat:'You\'ve got this', text:'Getting things right when they\'re hard to get right is its own form of excellence.'},
+  {cat:'You\'ve got this', text:'If your work were easy, anyone could do it. It\'s not, and not just anyone can.'},
+  // Humor
+  {cat:'Work humor', text:'Somewhere out there, a physician wrote "see note" in a note that references another note that says "see note."'},
+  {cat:'Work humor', text:'Fun game: how many times can one record say "per above" before it\'s legally considered a riddle?'},
+  {cat:'Work humor', text:'"Documented elsewhere" is the clinical equivalent of "it\'s somewhere in the house."'},
+  {cat:'Work humor', text:'You could have gone to med school. You chose to actually understand what the documentation says. Respect.'},
+  {cat:'Work humor', text:'Friendly reminder that "patient stable" and "patient stabled" are very different outcomes.'},
+  {cat:'Work humor', text:'If abstracting were easy, they\'d call it data entry. They don\'t. You\'re welcome.'},
+  {cat:'Work humor', text:'Somewhere a coder is about to assign a diagnosis code for "struck by a turtle." And you thought YOUR job was complicated.'},
+  {cat:'Work humor', text:'"Alert and oriented x3" — which three? The record will not say. It never says.'},
+  {cat:'Work humor', text:'You: reads 47 pages of notes to find one timestamp. The timestamp: in the margin, in pencil, sideways.'},
+  {cat:'Work humor', text:'Physician note: "Patient doing well." 40 pages of nursing notes: "Patient not doing well."'},
+  // Mindset
+  {cat:'Mindset', text:'You can\'t control what\'s in the chart. You can only control how carefully you look at it.'},
+  {cat:'Mindset', text:'One session at a time. You don\'t have to finish everything today — you just have to do good work right now.'},
+  {cat:'Mindset', text:'Perfectionism and precision are different things. Precision is required. Perfectionism just costs you energy.'},
+  {cat:'Mindset', text:'When the spec is unclear, document your reasoning. Future-you and your QA reviewer will both be grateful.'},
+  {cat:'Mindset', text:'A wrong answer you can explain is better than a right answer you can\'t defend. Document your rationale.'},
+  {cat:'Mindset', text:'Uncertainty in a case is not a failure — it\'s accurate recognition of an ambiguous record. Note it and move on.'},
+];
+
+function showBreakOverlay(){
+  const overlay=document.getElementById('breakOverlay');
+  overlay.classList.add('show');
+  document.getElementById('breakDisplay').textContent=secsToDisplay(breakMins*60);
+  const tip=BREAK_TIPS[Math.floor(Math.random()*BREAK_TIPS.length)];
+  document.getElementById('breakTipText').innerHTML=`<div class="tip-category">${tip.cat}</div>${tip.text}`;
+  const lbl=document.getElementById('sessionLabel').value.trim();
+  document.getElementById('breakSessionLabel').textContent=lbl?'Finished: '+lbl:'';
+
+  // Build carousel fresh each time so it picks up new photos
+  const wrap=document.getElementById('breakCarouselWrap');
+  if(dogPhotos.length>0){
+    wrap.style.display='block';
+    breakCarousel=makeCarousel(wrap, dogPhotos, {dark:true, size:'large'});
+    if(breakCarousel) breakCarousel.startAuto();
+  } else {
+    wrap.style.display='none';
+  }
+}
+function hideBreakOverlay(){
+  document.getElementById('breakOverlay').classList.remove('show');
+  if(breakCarousel){ breakCarousel.stopAuto(); breakCarousel=null; }
+}
+
+/* ═══════════════════════════════════════
+   AUDIO ENGINE
+   — File-based sounds use HTML5 <audio> with local MP3s from sounds/
+   — Brown noise stays synthesized (Web Audio API) — no file needed
+   — All sounds respect the master volume slider
+   — Volume fades to 30% during break if option is checked
+═══════════════════════════════════════ */
+
+let currentSound = null;
+let currentAudioEl = null;       // active <audio> element (file-based)
+let currentVolume = 0.4;
+let isFadedForBreak = false;
+
+// ── SYNTHESIZED BROWN NOISE (no file required) ──────────────────
+let audioCtx = null, masterGain = null, brownNode = null;
+
+function getBrownCtx(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = currentVolume;
+    masterGain.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+function startBrownNoise(){
+  const ctx = getBrownCtx();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const bufSize = 4 * ctx.sampleRate;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for(let i=0;i<bufSize;i++){
+    last = (last + 0.02*(Math.random()*2-1))/1.02;
+    d[i] = last*3.5;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass'; filt.frequency.value = 400;
+  src.connect(filt); filt.connect(masterGain);
+  src.start();
+  brownNode = src;
+}
+
+function stopBrownNoise(){
+  if(brownNode){ try{ brownNode.stop(); }catch(e){} brownNode=null; }
+}
+
+// ── FILE-BASED SOUNDS ────────────────────────────────────────────
+// Each entry maps to  sounds/<file>
+// If the file is missing the card shows a "File not found" status
+// and clicking it is a no-op rather than crashing.
+
+const BASE = 'https://raw.githubusercontent.com/tannimon/tanni-tools-audio/main/';
+const SOUNDS = [
+  { id:'brown',        name:'Brown Noise',     icon:'ph-wave-sine',          file:null,                                                                                                            desc:'Built-in \xb7 always available' },
+  { id:'rain',         name:'Calming Rain',    icon:'ph-cloud-rain',         file:BASE+'liecio-calming-rain-257596.mp3',                                                                           desc:'1:48 \xb7 gentle rainfall' },
+  { id:'softfocus',    name:'Soft Focus',      icon:'ph-sun-horizon',        file:BASE+'chrisdjyogi-soft-focus-ambient-for-calm-work-sessions-457309.mp3',                                         desc:'4:32 \xb7 calm work sessions' },
+  { id:'soundscape',   name:'Soundscape',      icon:'ph-mountains',          file:BASE+'leberch-soundscape-ambient-254540.mp3',                                                                     desc:'4:32 \xb7 ambient texture' },
+  { id:'modernambient',name:'Modern Ambient',  icon:'ph-sparkle',            file:BASE+'mindfulliving-modern-ambient-focus-yoga-and-meditation-background-music-465649.mp3',                       desc:'4:33 \xb7 focus & meditation' },
+  { id:'piano',        name:'Ambient Piano',   icon:'ph-music-note',         file:BASE+'nickpanekaiassets-ambient-piano-instrumental-for-corporate-focus-229970.mp3',                              desc:'1:45 \xb7 instrumental focus' },
+  { id:'vibes',        name:'Relaxing Vibes',  icon:'ph-radio',              file:BASE+'pripac-relaxing-vibes-for-gaming-focus-323623.mp3',                                                        desc:'2:28 \xb7 lo-fi focus' },
+  { id:'deep',         name:'Deep Ambient',    icon:'ph-planet',             file:BASE+'quietphase-deep-ambient-489703.mp3',                                                                       desc:'6:48 \xb7 deep background' },
+];
+
+// Track which files actually exist so we can show a helpful status
+const fileStatus = {}; // id → 'ok' | 'missing'
+
+function checkFiles(){
+  SOUNDS.forEach(s => {
+    if(!s.file){ fileStatus[s.id]='ok'; return; }
+    // Probe with a fetch — works for local files when served from disk
+    // Falls back gracefully: if fetch isn't available we just mark unknown
+    const audio = new Audio();
+    audio.src = s.file;
+    audio.addEventListener('canplaythrough', () => {
+      fileStatus[s.id] = 'ok';
+      const el = document.querySelector(`#scard-${s.id} .sound-status`);
+      if(el && currentSound !== s.id) el.textContent = 'Tap to play';
+    }, {once:true});
+    audio.addEventListener('error', () => {
+      fileStatus[s.id] = 'missing';
+      const card = document.getElementById('scard-'+s.id);
+      if(card){
+        card.classList.add('sound-missing');
+        const el = card.querySelector('.sound-status');
+        if(el) el.textContent = 'Not available';
+      }
+    }, {once:true});
+    // Start load probe — we don't actually play it yet
+    audio.load();
+  });
+}
+
+function toggleSound(id){
+  const def = SOUNDS.find(s=>s.id===id);
+  if(!def) return;
+
+  // If this sound is already playing, stop it
+  if(currentSound === id){
+    stopCurrentSound();
+    currentSound = null;
+    updateSoundCards();
+    return;
+  }
+
+  // Stop whatever was playing
+  stopCurrentSound();
+  currentSound = id;
+
+  if(id === 'brown'){
+    // Synthesized
+    startBrownNoise();
+  } else {
+    if(fileStatus[id]==='missing'){
+      currentSound = null;
+      return;
+    }
+    const audio = new Audio(def.file);
+    audio.loop = true;
+    audio.volume = currentVolume * (isFadedForBreak ? 0.3 : 1);
+    audio.play().catch(()=>{
+      fileStatus[id]='missing';
+      const card=document.getElementById('scard-'+id);
+      if(card){ card.classList.add('sound-missing'); card.querySelector('.sound-status').textContent='Not available'; }
+      currentSound=null; updateSoundCards();
+    });
+    currentAudioEl = audio;
+  }
+
+  updateSoundCards();
+}
+
+function stopCurrentSound(){
+  stopBrownNoise();
+  if(currentAudioEl){
+    currentAudioEl.pause();
+    currentAudioEl.src='';
+    currentAudioEl = null;
+  }
+}
+
+function updateSoundCards(){
+  document.querySelectorAll('.sound-card').forEach(c=>{
+    const id = c.id.replace('scard-','');
+    const isMissing = c.classList.contains('sound-missing');
+    c.classList.remove('playing');
+    if(!isMissing) c.querySelector('.sound-status').textContent='Tap to play';
+  });
+  if(currentSound){
+    const card = document.getElementById('scard-'+currentSound);
+    if(card){ card.classList.add('playing'); card.querySelector('.sound-status').textContent='Playing…'; }
+  }
+}
+
+function setVolume(val){
+  currentVolume = val/100;
+  document.getElementById('volVal').textContent = val+'%';
+  applyVolume();
+}
+
+function applyVolume(){
+  const v = currentVolume * (isFadedForBreak ? 0.3 : 1);
+  if(masterGain) masterGain.gain.value = v;
+  if(currentAudioEl) currentAudioEl.volume = v;
+}
+
+function setVolumeFade(mult){
+  isFadedForBreak = (mult < 1);
+  applyVolume();
+}
+
+function buildSoundGrid(){
+  const grid = document.getElementById('soundGrid');
+  SOUNDS.forEach(s=>{
+    const card = document.createElement('div');
+    card.className = 'sound-card';
+    card.id = 'scard-'+s.id;
+    card.onclick = ()=>toggleSound(s.id);
+    card.innerHTML = `
+      <div class="playing-dot"></div>
+      <i class="ph-bold ${s.icon} sound-icon"></i>
+      <div class="sound-name">${s.name}</div>
+      <div class="sound-status">${s.id==='brown'?'Tap to play':'Checking…'}</div>
+    `;
+    grid.appendChild(card);
+  });
+  // Probe files after a short delay (DOM must be ready)
+  setTimeout(checkFiles, 200);
+}
+
+/* INIT */
+buildSoundGrid();
+renderPips();
+updateTimerUI();
+document.getElementById('timerDisplay').textContent=secsToDisplay(focusMins*60);
+
+/* ═══════════════════════════════════════
+   WORK JAMS — non-looping tracks
+═══════════════════════════════════════ */
+const JAMS = [
+  { id:'case43',   title:'Case 43',                          file:BASE+'a1.mp3', duration:'4:24' },
+  { id:'sep1song', title:'Doing What I Do (The SEP-1 Song)', file:BASE+'a2.mp3', duration:'3:32' },
+  { id:'lactate',  title:'I Missed the Lactate',             file:BASE+'a3.mp3', duration:'4:27' },
+  { id:'legacy',   title:'Legacy Health',                    file:BASE+'a4.mp3', duration:'3:15' },
+];
+
+let activeJam = null;      // { id, audio, intervalId }
+
+function fmtTime(secs){
+  if(isNaN(secs)) return '0:00';
+  const m = Math.floor(secs/60);
+  const s = Math.floor(secs%60);
+  return m+':'+(s<10?'0':'')+s;
+}
+
+function buildJamList(){
+  const list = document.getElementById('jamList');
+  JAMS.forEach(j => {
+    const row = document.createElement('div');
+    row.className = 'jam-row';
+    row.id = 'jam-'+j.id;
+    row.innerHTML = `
+      <div class="jam-top">
+        <button class="jam-play" onclick="toggleJam('${j.id}')" title="Play / Pause">
+          <i class="ph-bold ph-play" id="jamicon-${j.id}"></i>
+        </button>
+        <div class="jam-info">
+          <div class="jam-title">${j.title}</div>
+          <div class="jam-meta" id="jammeta-${j.id}">${j.duration} · tap to play</div>
+        </div>
+        <div class="jam-time" id="jamtime-${j.id}">${j.duration}</div>
+      </div>
+      <div class="jam-progress-wrap">
+        <input type="range" class="jam-progress" id="jamprog-${j.id}"
+          min="0" max="100" value="0"
+          oninput="seekJam('${j.id}', this.value)">
+      </div>`;
+    list.appendChild(row);
+
+    // Probe file availability — skip for remote URLs, let play() handle errors
+    if(!j.file.startsWith('http')){
+      const probe = new Audio();
+      probe.src = j.file;
+      probe.addEventListener('error', () => {
+        row.classList.add('jam-missing');
+        document.getElementById('jammeta-'+j.id).textContent = 'Not available';
+        row.querySelector('.jam-play').disabled = true;
+      }, {once:true});
+      probe.load();
+    }
+  });
+}
+
+function toggleJam(id){
+  const jam = JAMS.find(j=>j.id===id);
+  if(!jam) return;
+
+  // If this jam is already active
+  if(activeJam && activeJam.id === id){
+    if(activeJam.audio.paused){
+      activeJam.audio.play();
+      document.getElementById('jamicon-'+id).className = 'ph-bold ph-pause';
+      document.getElementById('jammeta-'+id).textContent = 'Playing…';
+      activeJam.intervalId = setInterval(()=>updateJamProgress(id), 500);
+    } else {
+      activeJam.audio.pause();
+      document.getElementById('jamicon-'+id).className = 'ph-bold ph-play';
+      document.getElementById('jammeta-'+id).textContent = 'Paused';
+      clearInterval(activeJam.intervalId);
+    }
+    return;
+  }
+
+  // Stop whatever jam was playing
+  stopActiveJam();
+
+  // Also stop ambient sound if one is playing
+  stopCurrentSound();
+  currentSound = null;
+  updateSoundCards();
+
+  const audio = new Audio(jam.file);
+  audio.volume = currentVolume * (isFadedForBreak ? 0.3 : 1);
+  audio.loop = false;
+
+  audio.addEventListener('ended', () => {
+    document.getElementById('jam-'+id).classList.remove('jam-playing');
+    document.getElementById('jamicon-'+id).className = 'ph-bold ph-play';
+    document.getElementById('jammeta-'+id).textContent = jam.duration + ' · tap to play';
+    document.getElementById('jamtime-'+id).textContent = jam.duration;
+    document.getElementById('jamprog-'+id).value = 0;
+    clearInterval(activeJam?.intervalId);
+    activeJam = null;
+  });
+
+  audio.play().catch(()=>{
+    document.getElementById('jam-'+id).classList.add('jam-missing');
+    document.getElementById('jammeta-'+id).textContent = 'File not found — place MP3 beside this HTML';
+    activeJam = null;
+  });
+
+  const intervalId = setInterval(()=>updateJamProgress(id), 500);
+  activeJam = { id, audio, intervalId };
+
+  document.getElementById('jam-'+id).classList.add('jam-playing');
+  document.getElementById('jamicon-'+id).className = 'ph-bold ph-pause';
+  document.getElementById('jammeta-'+id).textContent = 'Playing…';
+}
+
+function updateJamProgress(id){
+  if(!activeJam || activeJam.id !== id) return;
+  const audio = activeJam.audio;
+  if(!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('jamprog-'+id).value = pct;
+  document.getElementById('jamtime-'+id).textContent =
+    fmtTime(audio.currentTime) + ' / ' + fmtTime(audio.duration);
+}
+
+function seekJam(id, pct){
+  if(!activeJam || activeJam.id !== id) return;
+  const audio = activeJam.audio;
+  if(audio.duration) audio.currentTime = (pct/100) * audio.duration;
+}
+
+function stopActiveJam(){
+  if(!activeJam) return;
+  clearInterval(activeJam.intervalId);
+  activeJam.audio.pause();
+  const id = activeJam.id;
+  document.getElementById('jam-'+id)?.classList.remove('jam-playing');
+  document.getElementById('jamicon-'+id) && (document.getElementById('jamicon-'+id).className='ph-bold ph-play');
+  const jam = JAMS.find(j=>j.id===id);
+  if(jam){
+    document.getElementById('jammeta-'+id).textContent = jam.duration + ' · tap to play';
+    document.getElementById('jamtime-'+id).textContent = jam.duration;
+    document.getElementById('jamprog-'+id).value = 0;
+  }
+  activeJam = null;
+}
+
+// Patch setVolumeFade to also update active jam volume
+const _origSetVolumeFade = setVolumeFade;
+function setVolumeFade(mult){
+  _origSetVolumeFade(mult);
+  if(activeJam?.audio) activeJam.audio.volume = currentVolume * mult;
+}
+
+// Patch setVolume to also update active jam volume
+const _origSetVolume = setVolume;
+function setVolume(val){
+  _origSetVolume(val);
+  if(activeJam?.audio) activeJam.audio.volume = currentVolume * (isFadedForBreak ? 0.3 : 1);
+}
+
+buildJamList();
+
+// Prevent right-click context menu on the sound/jams section
+document.getElementById('page-sound').addEventListener('contextmenu', e => e.preventDefault());
+// Also block any audio elements that get created dynamically
+document.addEventListener('contextmenu', e => {
+  if(e.target.tagName === 'AUDIO') e.preventDefault();
+});
+</script>
+</body>
+</html>

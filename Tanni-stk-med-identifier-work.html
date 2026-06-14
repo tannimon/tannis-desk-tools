@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STK Medication Identifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6b4ab0; --purple2:#8b6fcc; --purple3:#a98fdc;
+  --purple4:#c4adec; --purple-pale:#f3f0ff; --purple-mid:#ddd4f8; --purple-deep:#3a2070;
+  --canvas:#f5f3ff; --card-bg:#ffffff; --card-border:#e8e3f8;
+  --card-hover-border:#a98fdc; --ink:#160e2c; --ink-mid:#3d2f6b; --ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+  --tag-stk-bg:#ede8fb; --tag-stk:#6b4ab0;
+  --tag-sep-bg:#e8f3fb; --tag-sep:#1d6fa4;
+  --tag-bh-bg:#fdf0e8;  --tag-bh:#a05a1a;
+  --tag-ref-bg:#e8fbf0; --tag-ref:#1a7a4a;
+  --green:#166534; --red:#9b1c1c; --amber:#8a5200; --blue:#1d6fa4;
+  --white:#ffffff;
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+  --radius:10px;
+  --max:720px;
+  --c-at-bg:#e8f3fb; --c-at:#1d6fa4; --c-at-b:#a8d4ee;
+  --c-ac-bg:#eef2ff; --c-ac:#4338ca; --c-ac-b:#a5b4fc;
+  --c-st-bg:#f0fdf4; --c-st:#166534; --c-st-b:#86efac;
+  --c-vt-bg:#fff8ec; --c-vt:#8a5200; --c-vt-b:#e8c060;
+  --c-no-bg:#f7f9fc; --c-no:#6b7f94; --c-no-b:#dbe2ec;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--canvas);color:var(--ink);font-size:15px;-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+.main{max-width:var(--max);margin:0 auto;padding:28px 24px 80px;}
+
+.input-box{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.input-box label{display:block;font-size:13px;font-weight:600;color:var(--ink-mid);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+textarea{width:100%;min-height:150px;font-family:var(--font);font-size:14px;line-height:1.7;padding:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--canvas);color:var(--ink);resize:vertical;}
+textarea:focus{outline:none;border-color:var(--purple3);}
+textarea::placeholder{color:var(--ink-soft);opacity:.7;}
+.btns{display:flex;gap:10px;margin-top:14px;}
+.btn-go{background:var(--purple2);color:white;font-family:var(--font);font-size:15px;font-weight:700;padding:11px 26px;border:none;border-radius:8px;cursor:pointer;transition:background .15s;}
+.btn-go:hover{background:var(--purple3);}
+.btn-clear{background:transparent;color:var(--ink-soft);font-family:var(--font);font-size:14px;font-weight:600;padding:10px 18px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;}
+.btn-clear:hover{color:var(--ink);border-color:#b0bbc8;}
+
+.results{display:none;}
+.results.show{display:block;}
+
+.cat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:500px){.cat-row{grid-template-columns:1fr;}}
+
+.cat{border-radius:var(--radius);padding:16px 18px;border:1.5px solid;}
+.cat.at{background:var(--c-at-bg);border-color:var(--c-at-b);}
+.cat.ac{background:var(--c-ac-bg);border-color:var(--c-ac-b);}
+.cat.st{background:var(--c-st-bg);border-color:var(--c-st-b);}
+.cat.vt{background:var(--c-vt-bg);border-color:var(--c-vt-b);}
+.cat.empty{background:var(--c-no-bg);border-color:var(--c-no-b);}
+
+.cat-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.cat.at .cat-name{color:var(--c-at);}
+.cat.ac .cat-name{color:var(--c-ac);}
+.cat.st .cat-name{color:var(--c-st);}
+.cat.vt .cat-name{color:var(--c-vt);}
+.cat.empty .cat-name{color:var(--c-no);}
+
+.med-list{display:flex;flex-direction:column;gap:6px;}
+.med-item{line-height:1.3;}
+.med-item .med-name{font-size:15px;font-weight:600;color:var(--ink);}
+.med-item .med-sub{font-size:12px;font-weight:400;color:var(--ink-soft);display:block;margin-top:1px;}
+.class-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;margin-top:3px;background:rgba(138,82,0,.1);color:var(--c-vt);border:1px solid rgba(138,82,0,.2);}
+
+.none-msg{font-size:14px;color:var(--c-no);font-style:italic;}
+
+.unmatched{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-top:4px;}
+.unmatched-label{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.um-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.um-chip{font-size:12px;background:var(--canvas);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--ink-mid);}
+
+.note{margin-top:20px;font-size:11px;color:var(--ink-soft);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<header style="position:sticky;top:0;z-index:200;background:var(--purple);border-bottom:1px solid rgba(255,255,255,.12);padding:12px 20px;display:flex;align-items:center;gap:14px;">
+  <span class="hbadge" style="background:rgba(255,255,255,.2);color:white;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:0.1em;white-space:nowrap;">STK-2/3/5/6</span>
+  <span class="htitle" style="font-size:15px;font-weight:700;color:white;">STK Medication Identifier</span>
+  <span class="hsub" style="font-size:11px;color:rgba(255,255,255,.65);font-family:var(--mono);">Per TJC Appendix C v2025A</span>
+</header>
+
+<div class="main">
+
+  <div class="input-box">
+    <label for="medInput">Discharge medication list</label>
+    <textarea id="medInput" placeholder="Aspirin 81mg daily&#10;Eliquis 5mg twice daily&#10;Atorvastatin 40mg at bedtime&#10;Metoprolol 25mg daily&#10;Lisinopril 10mg daily"></textarea>
+    <div class="btns">
+      <button class="btn-go" onclick="identify()">Identify</button>
+      <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="cat-row">
+      <div class="cat" id="card-at"><div class="cat-name">Antithrombotic</div><div id="body-at"></div></div>
+      <div class="cat" id="card-ac"><div class="cat-name">Anticoagulation</div><div id="body-ac"></div></div>
+      <div class="cat" id="card-st"><div class="cat-name">Statin</div><div id="body-st"></div></div>
+      <div class="cat" id="card-vt"><div class="cat-name">VTE Prophylaxis</div><div id="body-vt"></div></div>
+    </div>
+    <div id="unmatched-section"></div>
+    <p class="note">Source: TJC Appendix C v2025A (Tables 8.1, 8.2, 8.3) and Appendix H v2025A (Tables 2.1, 2.7). Discharges 01-01-25 through 06-30-25. For abstraction reference only.</p>
+  </div>
+
+</div>
+
+<script>
+const AT = [
+  {d:"Aspirin / ASA",g:"aspirin",m:["acetylsalicylic acid","acuprin","alka-seltzer","anacin","arthritis foundation aspirin","arthritis pain ascriptin","arthritis pain formula","ascriptin","aspir-10","aspir-low","aspir-lox","aspir-mox","aspir-trin","aspirbuf","aspircaf","aspirtab","bayer aspirin","bayer children","bayer ec","bayer enteric","bayer low strength","bayer plus","buffered asa","buffered aspirin","buffered baby asa","bufferin","buffex","ctd aspirin","cama arthritis","child's aspirin","coated aspirin","cosprin","dasprin","easprin","ecotrin","effervescent pain","empirin","entab","entaprin","entercote","enteric coated aspirin","excedrin","extra strength bayer","genacote","genprin","halfprin","litecoat aspirin","low dose asa","magnaprin","med aspirin","norwich aspirin","pain relief with aspirin","sloprin","st. joseph aspirin","stanback","therapy bayer","tri buffered aspirin","uni-as","uni-buff","uni-tren","zorprin","aspirin/caffeine","aspirin caffeine","asa baby","asa bayer","asa ec","asa buffered","asa children","asa enteric","asa maalox","aspirin"]},
+  {d:"Aggrenox",g:"aspirin/dipyridamole",m:["aggrenox","aspirin/dipyridamole","aspirin dipyridamole","dipyridamole"]},
+  {d:"Plavix",g:"clopidogrel",m:["plavix","clopidogrel"]},
+  {d:"Brilinta",g:"ticagrelor",m:["brilinta","ticagrelor"]},
+  {d:"Effient",g:"prasugrel",m:["effient","prasugrel"]},
+  {d:"Ticlid",g:"ticlopidine",m:["ticlid","ticlopidine"]},
+  {d:"Eliquis",g:"apixaban",m:["eliquis","apixaban"]},
+  {d:"Xarelto",g:"rivaroxaban",m:["xarelto","rivaroxaban"]},
+  {d:"Pradaxa",g:"dabigatran",m:["pradaxa","dabigatran","dabigatran etexilate"]},
+  {d:"Savaysa",g:"edoxaban",m:["savaysa","edoxaban"]},
+  {d:"Warfarin / Coumadin",g:"warfarin",m:["coumadin","jantoven","warfarin"]},
+  {d:"Lovenox",g:"enoxaparin",m:["lovenox","enoxaparin"]},
+  {d:"Fragmin",g:"dalteparin",m:["fragmin","dalteparin"]},
+  {d:"Arixtra",g:"fondaparinux",m:["arixtra","fondaparinux","fondaparinux sodium"]},
+  {d:"Heparin IV",g:"heparin sodium I.V.",m:["heparin sodium i.v","heparin i.v","heparin iv","unfractionated heparin"]},
+  {d:"Argatroban",g:"argatroban",m:["argatroban","acova"]},
+  {d:"Lepirudin",g:"lepirudin",m:["lepirudin","refludan"]},
+  {d:"Hirudin",g:"hirudin",m:["hirudin","recombinant hirudin"]},
+];
+
+const AC = [
+  {d:"Eliquis",g:"apixaban",m:["eliquis","apixaban"]},
+  {d:"Xarelto",g:"rivaroxaban",m:["xarelto","rivaroxaban"]},
+  {d:"Pradaxa",g:"dabigatran",m:["pradaxa","dabigatran","dabigatran etexilate"]},
+  {d:"Savaysa",g:"edoxaban",m:["savaysa","edoxaban"]},
+  {d:"Warfarin / Coumadin",g:"warfarin",m:["coumadin","jantoven","warfarin"]},
+  {d:"Lovenox",g:"enoxaparin",m:["lovenox","enoxaparin"]},
+  {d:"Fragmin",g:"dalteparin",m:["fragmin","dalteparin"]},
+  {d:"Arixtra",g:"fondaparinux",m:["arixtra","fondaparinux","fondaparinux sodium"]},
+  {d:"Heparin IV",g:"heparin sodium I.V.",m:["heparin sodium i.v","heparin i.v","heparin iv","unfractionated heparin"]},
+  {d:"Argatroban",g:"argatroban",m:["argatroban","acova"]},
+  {d:"Bivalirudin",g:"bivalirudin",m:["bivalirudin","angiomax","angiox"]},
+  {d:"Lepirudin",g:"lepirudin",m:["lepirudin","refludan"]},
+  {d:"Hirudin",g:"hirudin",m:["hirudin","recombinant hirudin"]},
+  {d:"Abciximab",g:"abciximab",m:["abciximab","reopro"]},
+  {d:"Eptifibatide",g:"eptifibatide",m:["eptifibatide","integrilin"]},
+  {d:"Tirofiban",g:"tirofiban",m:["tirofiban","aggrastat"]},
+];
+
+const ST = [
+  {d:"Atorvastatin / Lipitor",g:"atorvastatin",m:["atorvastatin","lipitor","caduet","atorvastatin/amlodipine"]},
+  {d:"Rosuvastatin / Crestor",g:"rosuvastatin",m:["rosuvastatin","crestor"]},
+  {d:"Simvastatin / Zocor",g:"simvastatin",m:["simvastatin","zocor"]},
+  {d:"Vytorin",g:"simvastatin/ezetimibe",m:["vytorin","simvastatin/ezetimibe","simvastatin ezetimibe"]},
+  {d:"Pravastatin",g:"pravastatin",m:["pravastatin","pravachol"]},
+  {d:"Lovastatin / Mevacor",g:"lovastatin",m:["lovastatin","mevacor","altoprev"]},
+  {d:"Fluvastatin / Lescol",g:"fluvastatin",m:["fluvastatin","lescol"]},
+  {d:"Pitavastatin / Livalo",g:"pitavastatin",m:["pitavastatin","livalo"]},
+];
+
+const VT = [
+  {d:"Warfarin / Coumadin",g:"warfarin",cls:"Coumadin / Warfarin",m:["coumadin","jantoven","warfarin","warfarin sodium"]},
+  {d:"Arixtra",g:"fondaparinux",cls:"Factor Xa Inhibitor",m:["arixtra","fondaparinux","fondaparinux sodium"]},
+  {d:"Eliquis",g:"apixaban",cls:"Oral Factor Xa Inhibitor",m:["eliquis","apixaban"]},
+  {d:"Savaysa",g:"edoxaban",cls:"Oral Factor Xa Inhibitor",m:["savaysa","edoxaban"]},
+  {d:"Xarelto",g:"rivaroxaban",cls:"Oral Factor Xa Inhibitor",m:["xarelto","rivaroxaban"]},
+  {d:"Heparin SQ",g:"heparin (subcutaneous)",cls:"Low Dose Unfractionated Heparin (LDUH)",m:["heparin subcu","heparin sq","heparin sc","heparin subq","heparin na","heparin sod","heparin sodium inj","heparin sodium"]},
+  {d:"Heparin",g:"heparin",cls:"Low Dose Unfractionated Heparin (LDUH)",m:["hep ","heparin"]},
+  {d:"Lovenox",g:"enoxaparin",cls:"Low Molecular Weight Heparin (LMWH)",m:["lovenox","enoxaparin"]},
+  {d:"Fragmin",g:"dalteparin",cls:"Low Molecular Weight Heparin (LMWH)",m:["fragmin","dalteparin"]},
+  {d:"Innohep",g:"tinzaparin",cls:"Low Molecular Weight Heparin (LMWH)",m:["innohep","tinzaparin"]},
+  {d:"Sequential Compression Device",g:"SCD / IPC device",cls:"Intermittent Pneumatic Compression (IPC)",m:["sequential compression","scd","ipc device","pneumatic compression","dvt boot","dvt pump","leg pump","ae pump","epc cuff","intermittent compression"]},
+  {d:"Graduated Compression Stockings",g:"GCS",cls:"Graduated Compression Stockings (GCS)",m:["graduated compression stocking","anti-embolism stocking","anti-thrombosis stocking","elastic support hose","surgical hose","white hose","thrombosis stocking","teds","compression stocking","ted hose"]},
+  {d:"Venous Foot Pump",g:"VFP",cls:"Venous Foot Pump (VFP)",m:["venous foot pump","foot pump","plantar venous","scd boot","sc boot"]},
+];
+
+function norm(s){return " "+s.toLowerCase().replace(/[^a-z0-9\/\- ]/g," ").replace(/\s+/g," ").trim()+" ";}
+function matchEntry(med,entries){
+  const n=norm(med);
+  for(const e of entries){for(const m of e.m){if(n.includes(" "+m+" ")||n.startsWith(m+" ")||n.endsWith(" "+m))return e;}}
+  return null;
+}
+function parseMeds(raw){return raw.split(/[\n,;]+/).map(s=>s.trim()).filter(s=>s.length>1);}
+function medHTML(e,showClass){
+  let sub="";
+  if(showClass&&e.cls){sub=`<span class="class-badge">${e.cls}</span>`;}
+  else if(e.g&&e.g.toLowerCase()!==e.d.toLowerCase()){sub=`<span class="med-sub">${e.g}</span>`;}
+  return `<div class="med-item"><span class="med-name">${e.d}</span>${sub}</div>`;
+}
+
+function identify(){
+  const raw=document.getElementById("medInput").value;
+  if(!raw.trim())return;
+  const meds=parseMeds(raw);
+  const matched=new Set();
+  function runCat(entries){
+    const seen=new Set(),out=[];
+    meds.forEach(med=>{const e=matchEntry(med,entries);if(e&&!seen.has(e.d)){seen.add(e.d);out.push(e);matched.add(med);}});
+    return out;
+  }
+  const resAT=runCat(AT),resAC=runCat(AC),resST=runCat(ST),resVT=runCat(VT);
+  function renderCard(key,cls,items,showClass){
+    const card=document.getElementById("card-"+key),body=document.getElementById("body-"+key),met=items.length>0;
+    card.className="cat "+(met?cls:"empty");
+    body.innerHTML=met?'<div class="med-list">'+items.map(e=>medHTML(e,showClass)).join("")+"</div>":'<p class="none-msg">None identified</p>';
+  }
+  renderCard("at","at",resAT,false);
+  renderCard("ac","ac",resAC,false);
+  renderCard("st","st",resST,false);
+  renderCard("vt","vt",resVT,true);
+  const unmatched=meds.filter(m=>!matched.has(m));
+  const us=document.getElementById("unmatched-section");
+  us.innerHTML=unmatched.length?`<div class="unmatched"><div class="unmatched-label">Not matched to a stroke measure</div><div class="um-chips">${unmatched.map(m=>`<span class="um-chip">${m}</span>`).join("")}</div></div>`:"";
+  const r=document.getElementById("results");
+  r.classList.add("show");
+  r.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function clearAll(){
+  document.getElementById("medInput").value="";
+  document.getElementById("results").classList.remove("show");
+  document.getElementById("medInput").focus();
+}
+document.getElementById("medInput").addEventListener("keydown",function(e){if(e.ctrlKey&&e.key==="Enter")identify();});
+</script>
+</body>
+</html>

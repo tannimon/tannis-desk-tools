@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quality Reporting Calendar — Tanni's Desk Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6b4ab0;--purple2:#8b6fcc;--purple3:#a98fdc;
+  --purple4:#c4adec;--purple-pale:#f3f0ff;--purple-mid:#ddd4f8;--purple-deep:#3a2070;
+  --canvas:#f5f3ff;--white:#fff;--ink:#160e2c;--ink-mid:#3d2f6b;--ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+  --green:#166534;--green-bg:#f0fdf4;--green-bd:#86efac;
+  --yellow:#854d0e;--yellow-bg:#fefce8;--yellow-bd:#fde047;
+  --orange:#9a3412;--orange-bg:#fff7ed;--orange-bd:#fdba74;
+  --red:#9b1c1c;--red-bg:#fef2f2;--red-bd:#fca5a5;
+  --gray:#4b5563;--gray-bg:#f9fafb;--gray-bd:#d1d5db;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --radius:10px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--canvas);color:var(--ink);font-size:15px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:200;background:var(--purple);padding:11px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.12);}
+.hbadge{background:rgba(255,255,255,.2);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:.1em;}
+.htitle{font-size:15px;font-weight:700;color:#fff;}
+.hclock{margin-left:auto;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.45);}
+
+/* ── LAYOUT ── */
+main{max-width:700px;margin:0 auto;padding:20px 16px 60px;}
+
+/* ── NEXT UP HERO ── */
+.next-up{background:var(--purple-deep);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
+.nu-eyebrow{font-family:var(--mono);font-size:9.5px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.nu-name{font-size:18px;font-weight:700;color:#fff;margin-bottom:3px;line-height:1.2;}
+.nu-date{font-size:12px;color:rgba(255,255,255,.6);}
+.nu-right{text-align:right;}
+.nu-num{font-family:var(--mono);font-size:38px;font-weight:500;color:#fff;line-height:1;}
+.nu-unit{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-top:2px;}
+.nu-pill{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);letter-spacing:.05em;}
+
+/* ── QUARTER STRIP ── */
+.quarter-strip{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;margin-bottom:18px;}
+.qs-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:10px;}
+.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;}
+.qs-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--canvas);}
+.qs-item-name{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.qs-item-date{font-family:var(--mono);font-size:10px;color:var(--ink-soft);}
+.qs-item-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+.tab-btn{flex:1;background:none;border:none;border-bottom:3px solid transparent;font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--ink-soft);padding:10px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.tab-btn i{font-size:14px;}
+.tab-btn.active{color:var(--purple);border-bottom-color:var(--purple);background:var(--purple-pale);}
+.tab-btn:hover:not(.active){background:var(--canvas);color:var(--ink);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── CALLOUTS ── */
+.cx{border-radius:8px;padding:10px 13px;margin-bottom:14px;font-size:12.5px;line-height:1.65;display:flex;gap:9px;align-items:flex-start;}
+.cx i{font-size:15px;flex-shrink:0;margin-top:1px;}
+.cx.warn{background:var(--yellow-bg);border:1px solid var(--yellow-bd);color:var(--yellow);}
+.cx.info{background:var(--purple-pale);border:1px solid var(--purple-mid);color:var(--purple);}
+
+/* ── SUBMISSION CARD (the core component) ── */
+.sub-list{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+
+.sub-card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-left:5px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  animation:fadeUp .2s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* urgency */
+.sub-card.s-past   {border-left-color:#bbb;opacity:.6;}
+.sub-card.s-red    {border-left-color:var(--red);}
+.sub-card.s-orange {border-left-color:#ea580c;}
+.sub-card.s-yellow {border-left-color:#ca8a04;}
+.sub-card.s-green  {border-left-color:var(--green);}
+
+/* card top */
+.sc-top{padding:14px 16px 12px;display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:start;}
+
+/* program identity */
+.sc-prog{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px;}
+.prog-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
+.pl-iqr  {background:#ede8fb;color:#6b4ab0;}
+.pl-oqr  {background:#e8f3fb;color:#1d6fa4;}
+.pl-ipfqr{background:#fdf0e8;color:#a05a1a;}
+.pl-tjc  {background:#e8fbf0;color:#1a7a4a;}
+.pl-custom{background:var(--canvas);color:var(--ink-soft);border:1px solid var(--border);}
+.conf-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em;}
+.cb-confirmed{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.cb-est{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-bd);}
+
+.sc-name{font-size:17px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:3px;}
+.sc-due{font-size:12px;color:var(--ink-soft);margin-bottom:0;}
+
+/* countdown */
+.sc-countdown{text-align:right;white-space:nowrap;}
+.sc-num{font-family:var(--mono);font-size:28px;font-weight:500;line-height:1;}
+.s-red    .sc-num{color:var(--red);}
+.s-orange .sc-num{color:#9a3412;}
+.s-yellow .sc-num{color:var(--yellow);}
+.s-green  .sc-num{color:var(--green);}
+.s-past   .sc-num{color:var(--gray);}
+.sc-unit{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
+.sc-pill{display:inline-block;margin-top:4px;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.s-red    .sc-pill{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.s-orange .sc-pill{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bd);}
+.s-yellow .sc-pill{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-bd);}
+.s-green  .sc-pill{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.s-past   .sc-pill{background:var(--gray-bg);color:var(--gray);border:1px solid var(--gray-bd);}
+
+/* submit checklist */
+.sc-submit{background:var(--canvas);border-top:1px solid var(--border);padding:11px 16px;}
+.sc-submit-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sc-submit-label i{font-size:13px;color:var(--purple);}
+.submit-items{display:flex;flex-direction:column;gap:5px;}
+.si{display:flex;align-items:flex-start;gap:8px;}
+.si-icon{font-size:14px;flex-shrink:0;margin-top:1px;color:var(--purple);}
+.si-text{}
+.si-name{font-size:13px;font-weight:600;color:var(--ink);}
+.si-desc{font-size:11.5px;color:var(--ink-soft);}
+
+/* tracker */
+.sc-tracker{border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--white);}
+.trk-label{font-size:11.5px;font-weight:600;color:var(--ink-mid);white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.trk-label i{font-size:13px;color:var(--purple);}
+.trk-inputs{display:flex;align-items:center;gap:6px;}
+.trk-in{width:56px;padding:4px 7px;border:1.5px solid var(--border);border-radius:6px;background:var(--canvas);font-family:var(--mono);font-size:13px;color:var(--ink);outline:none;text-align:center;transition:border-color .15s;}
+.trk-in:focus{border-color:var(--purple3);}
+.trk-sep{font-size:12px;color:var(--ink-soft);}
+.trk-bar-wrap{flex:1;min-width:80px;}
+.trk-bar-track{height:6px;background:rgba(0,0,0,.08);border-radius:99px;overflow:hidden;}
+.trk-bar-fill{height:100%;border-radius:99px;background:var(--purple);transition:width .3s;}
+.trk-bar-fill.done{background:var(--green);}
+.trk-bar-fill.low{background:#ca8a04;}
+.trk-pct{font-family:var(--mono);font-size:13px;font-weight:700;min-width:38px;text-align:right;}
+
+/* progress bar at card bottom */
+.sc-bar{height:4px;background:rgba(0,0,0,.07);}
+.sc-bar-fill{height:100%;transition:width .4s ease;}
+.s-red    .sc-bar-fill{background:var(--red);}
+.s-orange .sc-bar-fill{background:#ea580c;}
+.s-yellow .sc-bar-fill{background:#ca8a04;}
+.s-green  .sc-bar-fill{background:var(--green);}
+.s-past   .sc-bar-fill{background:#bbb;}
+
+/* month group */
+.month-group{margin-bottom:22px;}
+.month-hdr{font-size:11.5px;font-weight:700;color:var(--ink-mid);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.month-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* measure details tab */
+.meas-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.meas-top{padding:14px 16px;display:flex;align-items:flex-start;gap:12px;}
+.meas-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
+.meas-body{flex:1;}
+.meas-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.meas-code{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
+.meas-desc{font-size:12.5px;color:var(--ink-mid);line-height:1.55;}
+.meas-elements{border-top:1px solid var(--border);padding:10px 16px;background:var(--canvas);}
+.meas-el-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;}
+.meas-el-grid{display:flex;flex-direction:column;gap:4px;}
+.mel{font-size:12px;color:var(--ink-mid);display:flex;gap:6px;}
+.mel-code{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--purple);min-width:60px;}
+
+/* add form */
+.add-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+.add-title{font-size:11.5px;font-weight:700;color:var(--ink-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.add-title i{font-size:15px;color:var(--purple);}
+.form-g2{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;}
+@media(max-width:440px){.form-g2{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:4px;}
+label{font-size:11px;font-weight:700;color:var(--ink-mid);text-transform:uppercase;letter-spacing:.05em;}
+input[type=text],input[type=date]{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:13.5px;outline:none;transition:border-color .15s,box-shadow .15s;}
+input:focus{border-color:var(--purple3);box-shadow:0 0 0 3px rgba(107,74,176,.10);}
+.add-btn{width:100%;margin-top:6px;background:var(--purple);color:#fff;border:none;font-family:var(--font);font-size:13.5px;font-weight:700;padding:10px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;}
+.add-btn:hover{background:var(--purple2);}
+.section-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+
+/* delete */
+.sc-delete{float:right;background:none;border:none;cursor:pointer;color:var(--ink-soft);opacity:0;font-size:14px;padding:2px;border-radius:3px;transition:opacity .15s,color .15s;margin-left:8px;}
+.sub-card:hover .sc-delete{opacity:.45;}
+.sc-delete:hover{opacity:1!important;color:var(--red);}
+
+/* sources table */
+.src-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.src-table th{text-align:left;padding:6px 8px;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid var(--border);}
+.src-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.src-table tr:last-child td{border-bottom:none;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--ink-soft);}
+.empty i{font-size:36px;opacity:.25;display:block;margin-bottom:10px;color:var(--purple);}
+
+@media(max-width:500px){
+  .sc-top{grid-template-columns:1fr;}
+  .sc-countdown{text-align:left;display:flex;align-items:center;gap:10px;}
+  .sc-pill{margin-top:0;}
+  .next-up{grid-template-columns:1fr;gap:6px;}
+  .nu-right{text-align:left;display:flex;align-items:baseline;gap:8px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="hbadge">UTIL</span>
+  <span class="htitle">Quality Reporting Calendar</span>
+  <span class="hclock" id="hclock"></span>
+</header>
+
+<main>
+
+  <!-- ── NEXT UP HERO ── -->
+  <div class="next-up" id="nextUp"></div>
+
+  <!-- ── THIS QUARTER STRIP ── -->
+  <div class="quarter-strip" id="quarterStrip"></div>
+
+  <!-- ── TABS ── -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('upcoming')" id="tab-upcoming"><i class="ph ph-calendar-blank"></i>Upcoming</button>
+    <button class="tab-btn" onclick="switchTab('annual')" id="tab-annual"><i class="ph ph-calendar-dots"></i>Annual View</button>
+    <button class="tab-btn" onclick="switchTab('measures')" id="tab-measures"><i class="ph ph-list-bullets"></i>Measure Details</button>
+    <button class="tab-btn" onclick="switchTab('custom')" id="tab-custom"><i class="ph ph-plus-circle"></i>My Deadlines</button>
+    <button class="tab-btn" onclick="switchTab('sources')" id="tab-sources"><i class="ph ph-info"></i>Sources</button>
+  </div>
+
+  <!-- UPCOMING -->
+  <div class="tab-panel active" id="panel-upcoming">
+    <div class="cx warn"><i class="ph ph-warning"></i><div>Dates marked <span class="conf-badge cb-est" style="display:inline;">EST</span> are <strong>anticipated</strong> — CMS has not officially published all 2026 deadlines. Always verify at <strong>qualitynet.cms.gov</strong> before submitting.</div></div>
+    <div id="upcoming-list"></div>
+  </div>
+
+  <!-- ANNUAL -->
+  <div class="tab-panel" id="panel-annual">
+    <div class="cx info"><i class="ph ph-info"></i><div>Full calendar view of all known and anticipated submission events for 2026–2027. Predicted dates extend the pattern from confirmed prior years.</div></div>
+    <div id="annual-list"></div>
+  </div>
+
+  <!-- MEASURE DETAILS -->
+  <div class="tab-panel" id="panel-measures">
+    <div class="cx info"><i class="ph ph-graduation-cap"></i><div>What each measure actually tracks — for abstractors and non-abstractors alike. This is the "what am I submitting and why?" reference.</div></div>
+    <div id="measures-list"></div>
+  </div>
+
+  <!-- CUSTOM -->
+  <div class="tab-panel" id="panel-custom">
+    <div class="add-card">
+      <div class="add-title"><i class="ph ph-calendar-plus"></i>Add an internal deadline</div>
+      <div class="form-g2">
+        <div class="field"><label>Deadline name</label><input type="text" id="inp-name" placeholder="e.g. Internal QA review due" maxlength="70"></div>
+        <div class="field"><label>Due date</label><input type="date" id="inp-date"></div>
+      </div>
+      <button class="add-btn" onclick="addCustom()"><i class="ph ph-plus"></i>Add deadline</button>
+    </div>
+    <div class="section-label">My deadlines</div>
+    <div class="sub-list" id="custom-list"></div>
+    <div class="empty" id="custom-empty" style="display:none;"><i class="ph ph-calendar-blank"></i><p>No custom deadlines yet.</p></div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="tab-panel" id="panel-sources">
+    <div class="cx warn"><i class="ph ph-warning-circle"></i><div>Last researched <strong>June 2026</strong>. CMS adjusts deadlines annually. Verify at <strong>qualitynet.cms.gov</strong>, <strong>qualityreportingcenter.com</strong>, and <strong>ecqi.healthit.gov</strong>.</div></div>
+    <div class="add-card">
+      <div class="add-title" style="margin-bottom:12px;"><i class="ph ph-table"></i>Source reference</div>
+      <table class="src-table">
+        <thead><tr><th>Reporting Program</th><th>Frequency</th><th>Confidence</th><th>Verify At</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CMS Outpatient Reporting (OQR)</strong><br><span style="font-size:11px;color:var(--ink-soft);">OP-18, OP-23 chart-abstracted</span></td><td>Quarterly</td><td><span class="conf-badge cb-confirmed">Confirmed</span></td><td>qualityreportingcenter.com</td></tr>
+          <tr><td><strong>CMS Outpatient Reporting (OQR)</strong><br><span style="font-size:11px;color:var(--ink-soft);">OP-22, OP-29 web-based</span></td><td>Annual</td><td><span class="conf-badge cb-confirmed">Confirmed</span></td><td>ecqi.healthit.gov</td></tr>
+          <tr><td><strong>CMS Inpatient Reporting (IQR)</strong><br><span style="font-size:11px;color:var(--ink-soft);">SEP-1 chart-abstracted</span></td><td>Quarterly</td><td><span class="conf-badge cb-est">Anticipated</span></td><td>qualitynet.cms.gov</td></tr>
+          <tr><td><strong>Psychiatric Quality Reporting (IPFQR)</strong><br><span style="font-size:11px;color:var(--ink-soft);">HBIPS-2 through HBIPS-5</span></td><td>Annual (summer)</td><td><span class="conf-badge cb-est">Anticipated</span></td><td>qualitynet.cms.gov</td></tr>
+          <tr><td><strong>Joint Commission Stroke (ORYX)</strong><br><span style="font-size:11px;color:var(--ink-soft);">STK, ASR-IP — vendor-driven</span></td><td>Quarterly</td><td><span class="conf-badge cb-est">Estimated</span></td><td>Your ORYX vendor</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cx info"><i class="ph ph-phone"></i><div><strong>TJC ORYX deadlines</strong> are not published centrally. Contact your ORYX vendor (Medisolv, Quantros, Vizient, etc.) for your hospital's specific quarterly schedule.</div></div>
+  </div>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA MODEL — Reporting Events, not individual measures
+// Each SUBMISSION is the unit. Measures are children of it.
+// ════════════════════════════════════════════════════════
+
+const SUBMISSIONS = [
+
+  // ──────────────────────────────────────────────────────
+  // CMS OUTPATIENT QUALITY REPORTING (OQR) — CONFIRMED
+  // Source: CMS QRC hoqr_2026_successful_guide_final_508.pdf
+  // ──────────────────────────────────────────────────────
+  {
+    id:'oqr-q4-25',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'Q4 2025 Quarterly Submission',
+    discharges:'Oct 1 – Dec 31, 2025',
+    date:'2026-05-01',
+    confirmed:true,
+    source:'CMS Quality Reporting Center (confirmed)',
+    submit:[
+      {code:'OP-18', name:'ED Throughput', desc:'Median time ED arrival to discharge for ED patients'},
+      {code:'OP-23', name:'Stroke Imaging Turnaround', desc:'Head CT or MRI read within 45 min of ED arrival for stroke patients'},
+    ],
+  },
+  {
+    id:'oqr-ann-25',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'CY 2025 Annual Web-Based Submission',
+    discharges:'Jan 1 – Dec 31, 2025',
+    date:'2026-05-15',
+    confirmed:true,
+    source:'ecqi.healthit.gov (confirmed)',
+    submit:[
+      {code:'OP-22', name:'Left Without Being Seen', desc:'Rate of patients who leave ED before evaluation is complete'},
+      {code:'OP-29', name:'Colonoscopy Follow-Up Interval', desc:'Appropriate follow-up interval after normal colonoscopy in average-risk patients'},
+    ],
+  },
+  {
+    id:'oqr-q1-26',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'Q1 2026 Quarterly Submission',
+    discharges:'Jan 1 – Mar 31, 2026',
+    date:'2026-08-03',
+    confirmed:true,
+    source:'CMS Quality Reporting Center (confirmed)',
+    submit:[
+      {code:'OP-18', name:'ED Throughput', desc:'Median time ED arrival to discharge for ED patients'},
+      {code:'OP-23', name:'Stroke Imaging Turnaround', desc:'Head CT or MRI read within 45 min of ED arrival for stroke patients'},
+    ],
+  },
+  {
+    id:'oqr-q2-26',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'Q2 2026 Quarterly Submission',
+    discharges:'Apr 1 – Jun 30, 2026',
+    date:'2026-11-02',
+    confirmed:true,
+    source:'CMS Quality Reporting Center (confirmed)',
+    submit:[
+      {code:'OP-18', name:'ED Throughput', desc:'Median time ED arrival to discharge for ED patients'},
+      {code:'OP-23', name:'Stroke Imaging Turnaround', desc:'Head CT or MRI read within 45 min of ED arrival for stroke patients'},
+    ],
+  },
+  {
+    id:'oqr-q3-26',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'Q3 2026 Quarterly Submission',
+    discharges:'Jul 1 – Sep 30, 2026',
+    date:'2027-02-01',
+    confirmed:true,
+    source:'CMS Quality Reporting Center (confirmed)',
+    submit:[
+      {code:'OP-18', name:'ED Throughput', desc:'Median time ED arrival to discharge for ED patients'},
+      {code:'OP-23', name:'Stroke Imaging Turnaround', desc:'Head CT or MRI read within 45 min of ED arrival for stroke patients'},
+    ],
+  },
+  {
+    id:'oqr-q4-26',
+    program:'CMS Outpatient Reporting',
+    programShort:'CMS OQR',
+    programClass:'pl-oqr',
+    event:'Q4 2026 Quarterly Submission',
+    discharges:'Oct 1 – Dec 31, 2026',
+    date:'2027-05-03',
+    confirmed:true,
+    source:'CMS Quality Reporting Center (confirmed)',
+    submit:[
+      {code:'OP-18', name:'ED Throughput', desc:'Median time ED arrival to discharge for ED patients'},
+      {code:'OP-23', name:'Stroke Imaging Turnaround', desc:'Head CT or MRI read within 45 min of ED arrival for stroke patients'},
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // CMS INPATIENT QUALITY REPORTING (IQR) — ANTICIPATED
+  // Source: Medisolv 2026 IQR requirements
+  // ──────────────────────────────────────────────────────
+  {
+    id:'iqr-q1-26',
+    program:'CMS Inpatient Reporting',
+    programShort:'CMS IQR',
+    programClass:'pl-iqr',
+    event:'Q1 2026 Quarterly Submission',
+    discharges:'Jan 1 – Mar 31, 2026',
+    date:'2026-08-17',
+    confirmed:false,
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'SEP-1', name:'Severe Sepsis & Septic Shock', desc:'Early management bundle — antibiotics, cultures, fluids, vasopressors'},
+      {code:'Pop & Sampling', name:'Population & Sampling Numbers', desc:'Required count of all eligible discharges for SEP-1'},
+    ],
+  },
+  {
+    id:'iqr-q2-26',
+    program:'CMS Inpatient Reporting',
+    programShort:'CMS IQR',
+    programClass:'pl-iqr',
+    event:'Q2 2026 Quarterly Submission',
+    discharges:'Apr 1 – Jun 30, 2026',
+    date:'2026-11-16',
+    confirmed:false,
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'SEP-1', name:'Severe Sepsis & Septic Shock', desc:'Early management bundle — antibiotics, cultures, fluids, vasopressors'},
+      {code:'Pop & Sampling', name:'Population & Sampling Numbers', desc:'Required count of all eligible discharges for SEP-1'},
+    ],
+  },
+  {
+    id:'iqr-q3-26',
+    program:'CMS Inpatient Reporting',
+    programShort:'CMS IQR',
+    programClass:'pl-iqr',
+    event:'Q3 2026 Quarterly Submission',
+    discharges:'Jul 1 – Sep 30, 2026',
+    date:'2027-02-15',
+    confirmed:false,
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'SEP-1', name:'Severe Sepsis & Septic Shock', desc:'Early management bundle — antibiotics, cultures, fluids, vasopressors'},
+      {code:'Pop & Sampling', name:'Population & Sampling Numbers', desc:'Required count of all eligible discharges for SEP-1'},
+    ],
+  },
+  {
+    id:'iqr-q4-26',
+    program:'CMS Inpatient Reporting',
+    programShort:'CMS IQR',
+    programClass:'pl-iqr',
+    event:'Q4 2026 Quarterly Submission',
+    discharges:'Oct 1 – Dec 31, 2026',
+    date:'2027-05-15',
+    confirmed:false,
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'SEP-1', name:'Severe Sepsis & Septic Shock', desc:'Early management bundle — antibiotics, cultures, fluids, vasopressors'},
+      {code:'Pop & Sampling', name:'Population & Sampling Numbers', desc:'Required count of all eligible discharges for SEP-1'},
+    ],
+  },
+  {
+    id:'iqr-ecqm-26',
+    program:'CMS Inpatient Reporting',
+    programShort:'CMS IQR',
+    programClass:'pl-iqr',
+    event:'CY 2026 Annual eCQM Submission',
+    discharges:'Jan 1 – Dec 31, 2026',
+    date:'2027-03-01',
+    confirmed:false,
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'eCQMs', name:'Electronic Clinical Quality Measures', desc:'5 required + 3 self-selected eCQMs for the full calendar year'},
+      {code:'DACA', name:'Data Accuracy Acknowledgement', desc:'Annual attestation that submitted data is accurate and complete'},
+      {code:'Structural', name:'Structural Measures', desc:'3 required structural measures (HCHE removed for 2026)'},
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // IPFQR (Psychiatric Quality Reporting) — ANTICIPATED
+  // Source: Medisolv; annual window Jul 1 – Aug 15
+  // ──────────────────────────────────────────────────────
+  {
+    id:'ipfqr-26',
+    program:'Psychiatric Quality Reporting',
+    programShort:'IPFQR',
+    programClass:'pl-ipfqr',
+    event:'CY 2025 Annual Submission',
+    discharges:'Jan 1 – Dec 31, 2025',
+    date:'2026-08-15',
+    confirmed:false,
+    note:'Submission window opens July 1. Closes August 15, 2026.',
+    source:'Medisolv / prior-year pattern (anticipated)',
+    submit:[
+      {code:'HBIPS-2', name:'Hours in Physical Restraint', desc:'Total hours patients spent in physical restraint'},
+      {code:'HBIPS-3', name:'Hours in Seclusion', desc:'Total hours patients spent in seclusion'},
+      {code:'HBIPS-4', name:'Patients Discharged on Multiple Antipsychotics', desc:'Patients leaving on 2+ antipsychotic medications with justification'},
+      {code:'HBIPS-5', name:'Patients Discharged on Multiple Antipsychotics w/ Justification', desc:'Subset with documented clinical justification'},
+      {code:'DACA', name:'Data Accuracy Acknowledgement', desc:'Required attestation; window Jul 1 – Aug 15, 2026'},
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // TJC ORYX — ESTIMATED (vendor-driven, no fixed CMS date)
+  // ──────────────────────────────────────────────────────
+  {
+    id:'tjc-q1-26',
+    program:'Joint Commission Stroke Certification',
+    programShort:'TJC ORYX',
+    programClass:'pl-tjc',
+    event:'Q1 2026 Quarterly Submission',
+    discharges:'Jan 1 – Mar 31, 2026',
+    date:'2026-08-15',
+    confirmed:false,
+    note:'Estimated. Deadline set by your ORYX vendor — verify with your vendor.',
+    source:'Estimated from prior-year pattern. Contact your ORYX vendor.',
+    submit:[
+      {code:'STK-1–10', name:'Acute Ischemic Stroke Bundle', desc:'Full TJC stroke bundle: antithrombotics, anticoagulation, LKW, rehabilitation, discharge instructions'},
+      {code:'ASR-IP', name:'Acute Stroke Ready — ED Protocols', desc:'Certification measures for stroke-ready hospitals'},
+    ],
+  },
+  {
+    id:'tjc-q2-26',
+    program:'Joint Commission Stroke Certification',
+    programShort:'TJC ORYX',
+    programClass:'pl-tjc',
+    event:'Q2 2026 Quarterly Submission',
+    discharges:'Apr 1 – Jun 30, 2026',
+    date:'2026-11-14',
+    confirmed:false,
+    note:'Estimated. Deadline set by your ORYX vendor — verify with your vendor.',
+    source:'Estimated from prior-year pattern.',
+    submit:[
+      {code:'STK-1–10', name:'Acute Ischemic Stroke Bundle', desc:'Full TJC stroke bundle: antithrombotics, anticoagulation, LKW, rehabilitation, discharge instructions'},
+      {code:'ASR-IP', name:'Acute Stroke Ready — ED Protocols', desc:'Certification measures for stroke-ready hospitals'},
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────
+  // 2027 PREDICTED (based on confirmed prior-year patterns)
+  // ──────────────────────────────────────────────────────
+  {
+    id:'oqr-q1-27',
+    program:'CMS Outpatient Reporting',programShort:'CMS OQR',programClass:'pl-oqr',
+    event:'Q1 2027 Quarterly Submission (Predicted)',
+    discharges:'Jan 1 – Mar 31, 2027',date:'2027-08-02',confirmed:false,predicted:true,
+    source:'Predicted from confirmed 2026 OQR pattern.',
+    submit:[{code:'OP-18',name:'ED Throughput',desc:''},{code:'OP-23',name:'Stroke Imaging Turnaround',desc:''}],
+  },
+  {
+    id:'oqr-q2-27',
+    program:'CMS Outpatient Reporting',programShort:'CMS OQR',programClass:'pl-oqr',
+    event:'Q2 2027 Quarterly Submission (Predicted)',
+    discharges:'Apr 1 – Jun 30, 2027',date:'2027-11-01',confirmed:false,predicted:true,
+    source:'Predicted from confirmed 2026 OQR pattern.',
+    submit:[{code:'OP-18',name:'ED Throughput',desc:''},{code:'OP-23',name:'Stroke Imaging Turnaround',desc:''}],
+  },
+  {
+    id:'iqr-q1-27',
+    program:'CMS Inpatient Reporting',programShort:'CMS IQR',programClass:'pl-iqr',
+    event:'Q1 2027 Quarterly Submission (Predicted)',
+    discharges:'Jan 1 – Mar 31, 2027',date:'2027-08-16',confirmed:false,predicted:true,
+    source:'Predicted from 2026 IQR anticipated pattern.',
+    submit:[{code:'SEP-1',name:'Severe Sepsis & Septic Shock',desc:''},{code:'Pop & Sampling',name:'Population & Sampling',desc:''}],
+  },
+  {
+    id:'iqr-q2-27',
+    program:'CMS Inpatient Reporting',programShort:'CMS IQR',programClass:'pl-iqr',
+    event:'Q2 2027 Quarterly Submission (Predicted)',
+    discharges:'Apr 1 – Jun 30, 2027',date:'2027-11-15',confirmed:false,predicted:true,
+    source:'Predicted from 2026 IQR anticipated pattern.',
+    submit:[{code:'SEP-1',name:'Severe Sepsis & Septic Shock',desc:''},{code:'Pop & Sampling',name:'Population & Sampling',desc:''}],
+  },
+  {
+    id:'ipfqr-27',
+    program:'Psychiatric Quality Reporting',programShort:'IPFQR',programClass:'pl-ipfqr',
+    event:'CY 2026 Annual Submission (Predicted)',
+    discharges:'Jan 1 – Dec 31, 2026',date:'2027-08-15',confirmed:false,predicted:true,
+    note:'Predicted: window expected Jul 1 – Aug 15, 2027.',
+    source:'Predicted from 2026 IPFQR pattern.',
+    submit:[{code:'HBIPS-2–5',name:'Behavioral Health Inpatient Bundle',desc:'Restraint/seclusion hours, discharge on multiple antipsychotics'}],
+  },
+];
+
+// ════════════════════════════
+// MEASURE DETAILS DATA
+// ════════════════════════════
+const MEASURE_DETAILS = [
+  {
+    code:'SEP-1', fullName:'Severe Sepsis and Septic Shock: Management Bundle',
+    program:'CMS IQR', icon:'🩸', iconBg:'#fdf0e8',
+    what:'Tracks whether patients with severe sepsis or septic shock received the full early management bundle within required time windows.',
+    why:'Sepsis is a leading cause of inpatient death. Bundle compliance reduces mortality.',
+    elements:[
+      {code:'SEP-1a', desc:'Blood cultures drawn before antibiotics'},
+      {code:'SEP-1b', desc:'Broad-spectrum antibiotics administered within 3 hours'},
+      {code:'SEP-1c', desc:'30 mL/kg IV crystalloid fluid bolus within 3 hours (septic shock)'},
+      {code:'SEP-1d', desc:'Vasopressors for refractory hypotension'},
+      {code:'SEP-1e', desc:'Reassessment of volume status and tissue perfusion'},
+    ],
+  },
+  {
+    code:'OP-18', fullName:'Median Time from ED Arrival to ED Departure for Discharged ED Patients',
+    program:'CMS OQR', icon:'⏱️', iconBg:'#e8f3fb',
+    what:'Measures how long patients spend in the ED from arrival to discharge — ED throughput efficiency.',
+    why:'Long ED wait times are associated with worse outcomes, patient dissatisfaction, and left-without-being-seen rates.',
+    elements:[
+      {code:'OP-18a', desc:'Arrival time to departure time for discharged ED patients (median minutes)'},
+    ],
+  },
+  {
+    code:'OP-23', fullName:'Head CT / MRI Results for Acute Stroke Patients Within 45 Minutes of ED Arrival',
+    program:'CMS OQR', icon:'🧠', iconBg:'#ede8fb',
+    what:'Tracks whether stroke patients receive interpretation of their head imaging within 45 minutes of arrival — a key step in tPA eligibility.',
+    why:'Time to imaging interpretation directly affects tPA eligibility windows and patient outcomes.',
+    elements:[
+      {code:'OP-23', desc:'CT or MRI scan interpretation documented within 45 min of ED arrival for ischemic or hemorrhagic stroke patients'},
+    ],
+  },
+  {
+    code:'OP-29', fullName:'Appropriate Follow-Up Interval for Normal Colonoscopy in Average-Risk Patients',
+    program:'CMS OQR', icon:'📋', iconBg:'#e8fbf0',
+    what:'Tracks whether patients with a normal colonoscopy and average risk were recommended the appropriate 10-year follow-up interval (not sooner).',
+    why:'Over-screening increases patient risk and healthcare costs without benefit.',
+    elements:[
+      {code:'OP-29', desc:'Documentation of 10-year recommended follow-up interval for average-risk patients with normal colonoscopy result'},
+    ],
+  },
+  {
+    code:'HBIPS-2/3', fullName:'Hours in Physical Restraint / Hours in Seclusion',
+    program:'IPFQR', icon:'🏥', iconBg:'#fdf0e8',
+    what:'Counts total hours psychiatric inpatients spent in physical restraint (HBIPS-2) or seclusion (HBIPS-3) per 1,000 patient hours.',
+    why:'CMS tracks restraint/seclusion use as a patient safety indicator. Lower rates signal better de-escalation practices.',
+    elements:[
+      {code:'HBIPS-2', desc:'Total hours per 1,000 patient hours spent in physical restraint'},
+      {code:'HBIPS-3', desc:'Total hours per 1,000 patient hours spent in seclusion'},
+    ],
+  },
+  {
+    code:'HBIPS-4/5', fullName:'Patients Discharged on Multiple Antipsychotic Medications',
+    program:'IPFQR', icon:'💊', iconBg:'#fdf0e8',
+    what:'HBIPS-4 tracks the rate of patients discharged on two or more antipsychotics. HBIPS-5 tracks the subset with documented clinical justification.',
+    why:'Multiple antipsychotics increase side-effect risk. When necessary, clinical justification must be documented.',
+    elements:[
+      {code:'HBIPS-4', desc:'Patients discharged on 2+ antipsychotic medications (total rate)'},
+      {code:'HBIPS-5', desc:'Patients discharged on 2+ antipsychotics with documented clinical justification'},
+    ],
+  },
+  {
+    code:'STK-1–10', fullName:'Acute Ischemic Stroke Care Bundle (TJC)',
+    program:'TJC ORYX', icon:'⚡', iconBg:'#ede8fb',
+    what:'The full TJC stroke certification measure set, covering the entire episode of care from ED to discharge.',
+    why:'TJC PSC and CSC certification requires meeting stroke bundle standards to demonstrate high-quality stroke care.',
+    elements:[
+      {code:'STK-2', desc:'Antithrombotic therapy prescribed at discharge'},
+      {code:'STK-3', desc:'Anticoagulation for atrial fibrillation/flutter at discharge'},
+      {code:'STK-4', desc:'Thrombolytic therapy administered (when eligible)'},
+      {code:'STK-5', desc:'Antithrombotic therapy by end of hospital day 2'},
+      {code:'STK-6', desc:'Discharged on statin medication'},
+      {code:'STK-8', desc:'Stroke education provided'},
+      {code:'STK-10', desc:'Assessed for rehabilitation'},
+    ],
+  },
+];
+
+// ════════════════════════════
+// URGENCY & FORMATTING
+// ════════════════════════════
+function stateFor(ms){
+  if(ms<=0)        return 'past';
+  if(ms<7*864e5)   return 'red';
+  if(ms<14*864e5)  return 'orange';
+  if(ms<30*864e5)  return 'yellow';
+  return 'green';
+}
+const STATUS={past:'PAST DUE',red:'< 7 DAYS',orange:'< 14 DAYS',yellow:'< 30 DAYS',green:'ON TRACK'};
+function fmtCd(ms){
+  const a=Math.abs(ms),d=Math.floor(a/864e5),h=Math.floor((a%864e5)/36e5);
+  if(d>60)  return{n:d,u:'days'};
+  if(d>=1)  return{n:`${d}d ${h}h`,u:'remaining'};
+  if(h>=1)  return{n:`${h}h`,u:'remaining'};
+  return{n:Math.max(1,Math.floor(a/6e4)),u:'min'};
+}
+function fmtDate(s){
+  return new Date(s+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+}
+function pct90(dl,now){
+  const end=new Date(dl.date+'T00:00:00').getTime();
+  const start=end-90*864e5;
+  return Math.min(100,Math.max(0,(now-start)/(end-start)*100));
+}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ════════════════════════════
+// TRACKER
+// ════════════════════════════
+function getT(id){try{return JSON.parse(localStorage.getItem('t2-'+id)||'{}');}catch{return{};}}
+function setT(id,o){try{localStorage.setItem('t2-'+id,JSON.stringify(o));}catch{}}
+function updateTracker(id,field,val){
+  const t=getT(id);t[field]=parseInt(val)||0;setT(id,t);
+  const el=document.getElementById('trk-'+id);
+  if(el){el.outerHTML=trackerHtml(id);}
+}
+function trackerHtml(id){
+  const t=getT(id);
+  const done=t.done||0,total=t.total||0;
+  const p=total>0?Math.round(done/total*100):0;
+  const bc=p>=100?'done':p<50&&total>0?'low':'';
+  const color=p>=100?'var(--green)':p<50&&total>0?'#ca8a04':'var(--ink-mid)';
+  return `<div class="sc-tracker" id="trk-${id}">
+    <span class="trk-label"><i class="ph ph-chart-bar"></i>Abstractions</span>
+    <div class="trk-inputs">
+      <input class="trk-in" type="number" min="0" placeholder="done" value="${done||''}"
+        oninput="updateTracker('${id}','done',this.value)" title="Completed abstractions">
+      <span class="trk-sep">of</span>
+      <input class="trk-in" type="number" min="0" placeholder="total" value="${total||''}"
+        oninput="updateTracker('${id}','total',this.value)" title="Total assigned">
+    </div>
+    ${total>0?`
+    <div class="trk-bar-wrap">
+      <div class="trk-bar-track"><div class="trk-bar-fill ${bc}" style="width:${p}%"></div></div>
+    </div>
+    <span class="trk-pct" style="color:${color}">${p}%</span>`:''}
+  </div>`;
+}
+
+// ════════════════════════════
+// CARD BUILDER
+// ════════════════════════════
+function buildCard(sub,now,deletable){
+  const deadMs=new Date(sub.date+'T00:00:00').getTime();
+  const ms=deadMs-now;
+  const state=stateFor(ms);
+  const cd=fmtCd(ms);
+  const p=pct90(sub,now);
+  const numDisplay=state==='past'?'PAST':cd.n;
+  const unitDisplay=state==='past'?'DUE':cd.u;
+
+  const predBadge=sub.predicted?`<span class="conf-badge" style="background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;">PREDICTED</span>`:'';
+  const confBadge=!sub.predicted?(sub.confirmed
+    ?`<span class="conf-badge cb-confirmed">CONFIRMED</span>`
+    :`<span class="conf-badge cb-est">EST</span>`):'';
+
+  const submitItems=sub.submit.map(s=>`
+    <div class="si">
+      <i class="ph ph-check-circle si-icon"></i>
+      <div class="si-text">
+        <div class="si-name">${escH(s.name)} <span style="font-family:var(--mono);font-size:10px;color:var(--ink-soft);font-weight:400;">${escH(s.code)}</span></div>
+        ${s.desc?`<div class="si-desc">${escH(s.desc)}</div>`:''}
+      </div>
+    </div>`).join('');
+
+  const delBtn=deletable?`<button class="sc-delete" onclick="deleteCustom(${sub.id})" title="Remove"><i class="ph ph-x"></i></button>`:'';
+
+  return `
+  <div class="sub-card s-${state}">
+    <div class="sc-top">
+      <div>
+        <div class="sc-prog">
+          <span class="prog-label ${sub.programClass}">${escH(sub.programShort||sub.program)}</span>
+          ${confBadge}${predBadge}
+          ${delBtn}
+        </div>
+        <div class="sc-name">${escH(sub.event)}</div>
+        <div class="sc-due">
+          <strong>Due ${fmtDate(sub.date)}</strong>
+          ${sub.discharges?` · Discharges: ${escH(sub.discharges)}`:''}
+        </div>
+        ${sub.note?`<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;font-style:italic;">${escH(sub.note)}</div>`:''}
+      </div>
+      <div class="sc-countdown">
+        <div class="sc-num">${numDisplay}</div>
+        <div class="sc-unit">${unitDisplay}</div>
+        <div class="sc-pill">${STATUS[state]}</div>
+      </div>
+    </div>
+    <div class="sc-submit">
+      <div class="sc-submit-label"><i class="ph ph-clipboard-text"></i>What to submit</div>
+      <div class="submit-items">${submitItems}</div>
+    </div>
+    ${trackerHtml(sub.id)}
+    <div class="sc-bar"><div class="sc-bar-fill" style="width:${p}%"></div></div>
+  </div>`;
+}
+
+// ════════════════════════════
+// NEXT UP HERO
+// ════════════════════════════
+function renderNextUp(){
+  const now=Date.now();
+  const next=SUBMISSIONS
+    .filter(s=>!s.predicted&&new Date(s.date+'T00:00:00').getTime()>now)
+    .sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
+  const el=document.getElementById('nextUp');
+  if(!next){el.style.display='none';return;}
+  const ms=new Date(next.date+'T00:00:00').getTime()-now;
+  const cd=fmtCd(ms);
+  el.innerHTML=`
+    <div>
+      <div class="nu-eyebrow">Next deadline</div>
+      <div class="nu-name">${escH(next.program)}<br><span style="font-weight:400;font-size:15px;opacity:.8;">${escH(next.event)}</span></div>
+      <div class="nu-date">Due ${fmtDate(next.date)}${next.discharges?' · '+next.discharges:''}</div>
+    </div>
+    <div class="nu-right">
+      <div class="nu-num">${cd.n}</div>
+      <div class="nu-unit">${cd.u}</div>
+      <div class="nu-pill">${next.programShort}</div>
+    </div>`;
+}
+
+// ════════════════════════════
+// QUARTER STRIP
+// ════════════════════════════
+function renderQuarterStrip(){
+  const now=Date.now();
+  const d=new Date();
+  const q=Math.floor(d.getMonth()/3)+1;
+  const yr=d.getFullYear();
+  const label=`Q${q} ${yr}`;
+  const upcoming=SUBMISSIONS
+    .filter(s=>!s.predicted&&new Date(s.date+'T00:00:00').getTime()>now)
+    .sort((a,b)=>new Date(a.date)-new Date(b.date))
+    .slice(0,4);
+  const el=document.getElementById('quarterStrip');
+  if(!upcoming.length){el.style.display='none';return;}
+  const items=upcoming.map(s=>{
+    const ms=new Date(s.date+'T00:00:00').getTime()-now;
+    const state=stateFor(ms);
+    const dotColor={red:'var(--red)',orange:'#ea580c',yellow:'#ca8a04',green:'var(--green)',past:'#aaa'}[state];
+    const cd=fmtCd(ms);
+    return `<div class="qs-item">
+      <div class="qs-item-name"><span class="qs-item-dot" style="background:${dotColor}"></span>${escH(s.programShort)}</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:2px;">${escH(s.event.replace(' Quarterly Submission','').replace(' Annual Submission','').replace(' (Predicted)',''))}</div>
+      <div class="qs-item-date">${fmtDate(s.date)}</div>
+      <div style="font-family:var(--mono);font-size:11px;font-weight:600;color:${dotColor};margin-top:3px;">${cd.n} ${cd.u}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="qs-label">Coming up next</div><div class="qs-grid">${items}</div>`;
+}
+
+// ════════════════════════════
+// RENDER LIST (grouped by month)
+// ════════════════════════════
+function renderList(containerId, items){
+  const now=Date.now();
+  const cutoff=now-30*864e5;
+  const filtered=items
+    .filter(s=>new Date(s.date+'T00:00:00').getTime()>cutoff)
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const el=document.getElementById(containerId);
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><i class="ph ph-check-circle"></i><p>No upcoming deadlines in this view.</p></div>`;
+    return;
+  }
+  const groups={};
+  filtered.forEach(s=>{
+    const key=new Date(s.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    if(!groups[key])groups[key]=[];
+    groups[key].push(s);
+  });
+  el.innerHTML=Object.entries(groups).map(([month,list])=>`
+    <div class="month-group">
+      <div class="month-hdr">${month}</div>
+      <div class="sub-list">${list.map(s=>buildCard(s,now,false)).join('')}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════
+// MEASURE DETAILS
+// ════════════════════════════
+function renderMeasures(){
+  const el=document.getElementById('measures-list');
+  el.innerHTML=MEASURE_DETAILS.map(m=>`
+    <div class="meas-card">
+      <div class="meas-top">
+        <div class="meas-icon" style="background:${m.iconBg}">${m.icon}</div>
+        <div class="meas-body">
+          <div class="meas-name">${escH(m.fullName)}</div>
+          <div class="meas-code">${escH(m.code)} · ${escH(m.program)}</div>
+          <div class="meas-desc"><strong>What it tracks:</strong> ${escH(m.what)}</div>
+          <div class="meas-desc" style="margin-top:4px;"><strong>Why it matters:</strong> ${escH(m.why)}</div>
+        </div>
+      </div>
+      <div class="meas-elements">
+        <div class="meas-el-label">Data elements abstracted</div>
+        <div class="meas-el-grid">${m.elements.map(e=>`
+          <div class="mel"><span class="mel-code">${escH(e.code)}</span><span>${escH(e.desc)}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════
+// CUSTOM DEADLINES
+// ════════════════════════════
+function loadC(){try{return JSON.parse(localStorage.getItem('qrc-v3')||'[]');}catch{return[];}}
+function saveC(l){try{localStorage.setItem('qrc-v3',JSON.stringify(l));}catch{}}
+function addCustom(){
+  const name=document.getElementById('inp-name').value.trim();
+  const date=document.getElementById('inp-date').value;
+  if(!name){flash('inp-name');return;}
+  if(!date){flash('inp-date');return;}
+  const id=Date.now();
+  const l=loadC();
+  l.push({id,event:name,date,program:'Internal Deadline',programShort:'INTERNAL',programClass:'pl-custom',confirmed:true,submit:[]});
+  saveC(l);
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-date').value='';
+  renderCustom();
+}
+function deleteCustom(id){saveC(loadC().filter(d=>d.id!==id));renderCustom();}
+function flash(id){const e=document.getElementById(id);e.style.borderColor='var(--red)';e.focus();setTimeout(()=>e.style.borderColor='',1200);}
+function renderCustom(){
+  const now=Date.now();
+  const l=loadC();
+  const el=document.getElementById('custom-list');
+  const empty=document.getElementById('custom-empty');
+  if(!l.length){el.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  el.innerHTML=[...l].sort((a,b)=>new Date(a.date)-new Date(b.date))
+    .map(s=>buildCard(s,now,true)).join('');
+}
+
+// ════════════════════════════
+// TABS & CLOCK
+// ════════════════════════════
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+function tickClock(){
+  document.getElementById('hclock').textContent=
+    new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+
+    new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+// ════════════════════════════
+// INIT
+// ════════════════════════════
+document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')addCustom();});
+
+const upcoming2026=SUBMISSIONS.filter(s=>!s.predicted);
+const predicted=SUBMISSIONS.filter(s=>s.predicted);
+
+renderNextUp();
+renderQuarterStrip();
+renderList('upcoming-list', upcoming2026);
+renderList('annual-list', [...upcoming2026,...predicted]);
+renderMeasures();
+renderCustom();
+tickClock();
+setInterval(()=>{renderNextUp();renderQuarterStrip();renderList('upcoming-list',upcoming2026);renderCustom();},60000);
+setInterval(tickClock,30000);
+</script>
+</body>
+</html>
