@@ -1,0 +1,138 @@
+[
+  {
+    "term": "Arrival Time",
+    "desc": "Date/time patient arrived at ED",
+    "src": "TJC",
+    "set": "STK/ED",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0018.html"
+  },
+  {
+    "term": "Antithrombotic Therapy Administered (Day 2)",
+    "desc": "STK-5: antithrombotic by end of hospital day 2",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0191.html"
+  },
+  {
+    "term": "Antithrombotic Therapy Prescribed at Discharge",
+    "desc": "STK-2: prescribed at hospital discharge",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0192.html"
+  },
+  {
+    "term": "CMO / Comfort Measures Only",
+    "desc": "Physician/NP/PA documentation of comfort measures only",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0031.html"
+  },
+  {
+    "term": "Time Last Known Well (LKW / TLKW)",
+    "desc": "Last time patient known to be at neurologic baseline",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0218.html"
+  },
+  {
+    "term": "Date Last Known Well",
+    "desc": "Date patient was last known without stroke signs/symptoms — collected separately from the time element",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0730.html"
+  },
+  {
+    "term": "Last Known Well (Y/N)",
+    "desc": "Was the LKW date and time witnessed or reported? Y/N — drives STK-4 / ASR-IP-1 / ASR-OP-1",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0731.html"
+  },
+  {
+    "term": "Initial NIHSS Score Performed",
+    "desc": "Whether initial NIHSS assessment was documented",
+    "src": "TJC",
+    "set": "STK/CSTK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0562.html"
+  },
+  {
+    "term": "VTE Prophylaxis",
+    "desc": "STK-1: VTE prophylaxis given day of or day after admission",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/DataElem0724.html"
+  },
+  {
+    "term": "HBIPS-2 (Physical Restraint Hours)",
+    "desc": "Total hours all psych inpatients held in physical restraint",
+    "src": "TJC",
+    "set": "HBIPS",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/MIF0117.html"
+  },
+  {
+    "term": "HBIPS-3 (Seclusion Hours)",
+    "desc": "Total hours all psych inpatients held in seclusion",
+    "src": "TJC",
+    "set": "HBIPS",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/MIF0118.html"
+  },
+  {
+    "term": "STK-1: VTE Prophylaxis (measure)",
+    "desc": "Measure info: VTE prophylaxis within 1 day of admission",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/MIF0126.html"
+  },
+  {
+    "term": "STK-2: Discharged on Antithrombotic (measure)",
+    "desc": "Measure info: antithrombotic therapy at discharge",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/MIF0127.html"
+  },
+  {
+    "term": "STK-5: Antithrombotic by Day 2 (measure)",
+    "desc": "Measure info: antithrombotic therapy by end of hospital day 2",
+    "src": "TJC",
+    "set": "STK",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/MIF0130.html"
+  },
+  {
+    "term": "SEP-1 Specifications Manual",
+    "desc": "CMS Sepsis bundle — Inpatient Quality Reporting",
+    "src": "CMS",
+    "set": "SEP",
+    "version": "current",
+    "url": "https://qualitynet.cms.gov/inpatient/specifications-manuals"
+  },
+  {
+    "term": "eCQM Specifications (all measures)",
+    "desc": "Electronic clinical quality measure spec manuals",
+    "src": "eCQI",
+    "set": "eCQM",
+    "version": "current",
+    "url": "https://ecqi.healthit.gov/eligible-hospital-and-critical-access-hospital-ecqms"
+  },
+  {
+    "term": "TJC Manual Table of Contents (2026B)",
+    "desc": "Full index — all measures and data elements",
+    "src": "TJC",
+    "set": "All",
+    "version": "2026B",
+    "url": "https://manual.jointcommission.org/releases/TJC2026B/TableOfContentsTJC.html"
+  }
+]
