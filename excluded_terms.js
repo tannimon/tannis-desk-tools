@@ -42,4 +42,7 @@ const EXCLUDED_TERMS = [
   'up to',
   'per',
   'for other',
+  'misc',
+  'intramuscular',
+  'by misc route',
 ];
