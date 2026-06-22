@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Word Search Builder — Tanni's Desk Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6b4ab0; --purple2:#8b6fcc; --purple3:#a98fdc;
+  --purple4:#c4adec; --purple-pale:#f3f0ff; --purple-mid:#ddd4f8; --purple-deep:#3a2070;
+  --canvas:#f5f3ff; --card-bg:#ffffff; --card-border:#e8e3f8;
+  --card-hover-border:#a98fdc; --ink:#160e2c; --ink-mid:#3d2f6b; --ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+  --tag-stk-bg:#ede8fb; --tag-stk:#6b4ab0;
+  --tag-sep-bg:#e8f3fb; --tag-sep:#1d6fa4;
+  --tag-bh-bg:#fdf0e8;  --tag-bh:#a05a1a;
+  --tag-ref-bg:#e8fbf0; --tag-ref:#1a7a4a;
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+  --radius:10px;
+  --green:#166534; --red:#9b1c1c; --amber:#8a5200; --blue:#1d6fa4;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+header{position:sticky;top:0;z-index:200;background:var(--purple);border-bottom:1px solid rgba(255,255,255,.12);padding:12px 20px;display:flex;align-items:center;gap:14px;}
+.hbadge{background:rgba(255,255,255,.2);color:white;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:0.1em;white-space:nowrap;}
+.htitle{font-size:15px;font-weight:700;color:white;}
+.hsub{font-size:11px;color:rgba(255,255,255,.65);font-family:var(--mono);}
+
+.tabs{background:#ffffff;border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:70;box-shadow:0 2px 10px rgba(13,34,64,.06);}
+.tabs-inner{max-width:1080px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;}
+.tab{background:none;border:none;color:var(--ink-soft);font-family:var(--font);font-size:14px;font-weight:600;padding:14px 18px 12px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:6px;}
+.tab i{font-size:16px;}
+.tab:hover{color:var(--ink);}
+.tab.on{color:var(--purple);border-bottom-color:var(--purple);}
+
+main{max-width:1080px;margin:0 auto;padding:24px 20px 60px;}
+.panel{display:none;}
+.panel.on{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.card-label{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--purple);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px;}
+.sh{font-size:19px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.ss{font-size:13px;color:var(--ink-soft);margin-bottom:18px;}
+
+.cx{border-radius:var(--radius);padding:11px 14px;margin:10px 0;display:flex;gap:10px;font-size:13px;line-height:1.55;}
+.cx-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.cx strong{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px;}
+.cx.tip{background:var(--purple-pale);border-left:3px solid var(--purple2);color:var(--ink-mid);}
+.cx.warn{background:#fff8ec;border-left:3px solid #e8a000;color:#6b3d00;}
+.cx.danger{background:#fef2f2;border-left:3px solid #dc2626;color:#7f1d1d;}
+.cx.ok{background:#f0fdf4;border-left:3px solid #22c55e;color:#14532d;}
+.cx.info{background:#eff6ff;border-left:3px solid #3b82f6;color:#1e3a8a;}
+
+label.flabel{display:block;font-size:12px;font-weight:600;color:var(--ink-mid);margin-bottom:6px;}
+textarea.finput,input.finput,select.finput{
+  width:100%;background:#fff;border:1.5px solid var(--border);border-radius:8px;
+  font-family:var(--font);font-size:14px;color:var(--ink);padding:9px 11px;
+  outline:none;transition:border-color .15s;
+}
+textarea.finput{resize:vertical;min-height:90px;font-family:var(--mono);font-size:13px;line-height:1.6;}
+.finput:focus{border-color:var(--purple3);}
+.field{margin-bottom:14px;}
+.field-hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.opt-check{display:flex;align-items:center;gap:8px;background:var(--purple-pale);border:1.5px solid var(--purple-mid);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;color:var(--ink-mid);font-weight:500;}
+.opt-check input{accent-color:var(--purple);width:16px;height:16px;cursor:pointer;}
+
+.btn{background:var(--purple);color:#fff;border:none;font-family:var(--font);font-size:14px;font-weight:700;padding:12px 22px;border-radius:var(--radius);cursor:pointer;transition:background .18s,transform .1s;display:inline-flex;align-items:center;gap:8px;}
+.btn:hover{background:var(--purple-deep);}
+.btn:active{transform:translateY(1px);}
+.btn.full{width:100%;justify-content:center;}
+.btn.ghost{background:#fff;color:var(--purple);border:1.5px solid var(--purple-mid);}
+.btn.ghost:hover{background:var(--purple-pale);}
+.btn.sm{padding:8px 14px;font-size:12.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+
+.result-box{border:2px solid var(--purple);background:var(--purple-pale);border-radius:var(--radius);padding:18px;margin-top:16px;}
+
+/* ── PRINT FORM LAYOUT ── */
+.form-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr;}}
+
+/* ── PUZZLE GRID RENDER (preview + play) ── */
+.puzzle-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.puzzle-grid{display:grid;gap:0;background:#fff;border:2px solid var(--ink);user-select:none;touch-action:none;}
+.puzzle-cell{
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font);font-weight:700;letter-spacing:0;
+  aspect-ratio:1/1;cursor:pointer;position:relative;color:var(--ink);
+  border:0.5px solid var(--purple-pale);
+}
+.puzzle-cell.sel{background:var(--purple3);color:#fff;}
+.puzzle-cell.found{background:#bbf7d0;color:var(--green);}
+.wordbank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px;}
+.wb-chip{font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:0.02em;padding:6px 12px;border-radius:20px;background:var(--purple-pale);border:1.5px solid var(--purple-mid);color:var(--ink-mid);transition:all .2s;}
+.wb-chip.done{background:#bbf7d0;border-color:#4ade80;color:var(--green);text-decoration:line-through;}
+
+.play-hud{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.hud-stat{font-family:var(--mono);font-size:13px;color:var(--ink-mid);background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;}
+.hud-stat b{color:var(--purple);}
+
+.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:8px;}
+.pack-card{background:#fff;border:2px solid var(--card-border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .1s;}
+.pack-card:hover{border-color:var(--card-hover-border);box-shadow:0 4px 16px rgba(107,74,176,.12);transform:translateY(-1px);}
+.pack-icon{width:38px;height:38px;border-radius:9px;background:var(--purple-pale);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.pack-icon i{font-size:21px;color:var(--purple);}
+.pack-name{font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.pack-meta{font-size:11.5px;color:var(--ink-soft);font-family:var(--mono);}
+
+.win-banner{text-align:center;padding:28px 20px;}
+.win-banner .big{font-size:44px;margin-bottom:6px;}
+.win-banner h3{font-size:20px;color:var(--ink);margin-bottom:6px;}
+.win-banner p{font-size:13.5px;color:var(--ink-soft);}
+
+.hidden{display:none !important;}
+
+footer.site-footer{max-width:1080px;margin:0 auto;padding:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);}
+footer.site-footer a{color:var(--purple);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="hbadge">PUZZLE</span>
+  <div>
+    <div class="htitle">Word Search Builder</div>
+    <div class="hsub">Print a puzzle or play one — your words or a preloaded pack</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tabs-inner">
+    <button class="tab on" id="tabbtn-print" onclick="showTab('print')"><i class="ph ph-printer"></i> Print Mode</button>
+    <button class="tab" id="tabbtn-play" onclick="showTab('play')"><i class="ph ph-game-controller"></i> Play Mode</button>
+  </div>
+</div>
+
+<main id="mainContent">
+
+  <!-- ══════════ PRINT PANEL ══════════ -->
+  <div class="panel on" id="panel-print">
+    <div class="card">
+      <div class="card-label">Step 1 — Build your list</div>
+      <div class="sh">Word Search → PDF</div>
+      <div class="ss">Type your words, set the grid options, generate, then download a print-ready PDF.</div>
+
+      <div class="form-grid">
+        <div>
+          <div class="field">
+            <label class="flabel">Words (one per line, or comma-separated)</label>
+            <textarea class="finput" id="p-words" placeholder="STROKE
+SEPSIS
+ABSTRACTION
+MEASURE
+QUALITY
+TIMEZERO"></textarea>
+            <div class="field-hint">Letters only (A–Z) are used; numbers and punctuation are stripped automatically.</div>
+          </div>
+          <div class="field">
+            <label class="flabel">Puzzle title (optional)</label>
+            <input class="finput" id="p-title" type="text" placeholder="e.g. Core Measures Word Search">
+          </div>
+        </div>
+
+        <div>
+          <div class="field">
+            <label class="flabel">Grid size</label>
+            <select class="finput" id="p-size">
+              <option value="10">10 × 10 (small)</option>
+              <option value="13" selected>13 × 13 (standard)</option>
+              <option value="16">16 × 16 (large)</option>
+              <option value="20">20 × 20 (extra large)</option>
+            </select>
+            <div class="field-hint">Grid auto-grows if your words don't fit at this size.</div>
+          </div>
+          <div class="field">
+            <label class="flabel">Filler letters (optional — leave blank for random A–Z)</label>
+            <input class="finput" id="p-filler" type="text" placeholder="e.g. ABSTRACT (repeats to fill gaps)">
+          </div>
+        </div>
+      </div>
+
+      <label class="flabel">Word directions to allow</label>
+      <div class="opt-grid">
+        <label class="opt-check"><input type="checkbox" id="p-horizontal" checked> Horizontal</label>
+        <label class="opt-check"><input type="checkbox" id="p-vertical" checked> Vertical</label>
+        <label class="opt-check"><input type="checkbox" id="p-diagonal" checked> Diagonal</label>
+        <label class="opt-check"><input type="checkbox" id="p-backward" checked> Allow backward</label>
+      </div>
+
+      <label class="opt-check" style="display:inline-flex;margin-bottom:14px;">
+        <input type="checkbox" id="p-answerkey" checked> Include answer key page in PDF
+      </label>
+
+      <div class="btn-row">
+        <button class="btn" onclick="runPrintGenerate()"><i class="ph ph-magic-wand"></i> Generate Puzzle</button>
+        <button class="btn ghost" id="p-pdfbtn" onclick="exportPrintPDF()" disabled><i class="ph ph-file-pdf"></i> Download PDF</button>
+      </div>
+
+      <div id="p-error"></div>
+    </div>
+
+    <div class="card hidden" id="p-previewcard">
+      <div class="card-label">Preview</div>
+      <div class="puzzle-wrap">
+        <div id="p-puzzletitle" style="font-weight:700;font-size:17px;"></div>
+        <div class="puzzle-grid" id="p-grid" style="width:min(560px,92vw);"></div>
+        <div class="wordbank" id="p-wordbank"></div>
+      </div>
+    </div>
+
+    <div class="cx tip">
+      <span class="cx-icon"><i class="ph-duotone ph-lightbulb"></i></span>
+      <div><strong>Tip</strong>Longer, more varied words place more reliably than several similar short words. If generation keeps failing, increase grid size or trim the list.</div>
+    </div>
+  </div>
+
+  <!-- ══════════ PLAY PANEL ══════════ -->
+  <div class="panel" id="panel-play">
+
+    <div id="play-setup">
+      <div class="card">
+        <div class="card-label">Choose a pack</div>
+        <div class="sh">Pick a preloaded set, or make your own</div>
+        <div class="ss">Tap a pack to load it instantly, or build a custom puzzle from your own words below.</div>
+        <div class="pack-grid" id="pack-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Or build your own</div>
+        <div class="field">
+          <label class="flabel">Words (one per line, or comma-separated)</label>
+          <textarea class="finput" id="play-words" placeholder="Type your own words to build a custom puzzle..."></textarea>
+        </div>
+        <div class="field" style="max-width:220px;">
+          <label class="flabel">Grid size</label>
+          <select class="finput" id="play-size">
+            <option value="10">10 × 10</option>
+            <option value="13" selected>13 × 13</option>
+            <option value="16">16 × 16</option>
+          </select>
+        </div>
+        <button class="btn" onclick="startCustomPlay()"><i class="ph ph-play"></i> Play This</button>
+        <div id="play-error"></div>
+      </div>
+    </div>
+
+    <div class="hidden" id="play-game">
+      <div class="play-hud">
+        <button class="btn ghost sm" onclick="exitPlay()"><i class="ph ph-arrow-left"></i> Change puzzle</button>
+        <div style="display:flex;gap:10px;">
+          <div class="hud-stat">Time <b id="play-timer">0:00</b></div>
+          <div class="hud-stat">Found <b id="play-foundcount">0</b> / <span id="play-totalcount">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="puzzle-wrap">
+          <div id="play-title" style="font-weight:700;font-size:17px;"></div>
+          <div class="puzzle-grid" id="play-grid" style="width:min(520px,92vw);"></div>
+          <div class="wordbank" id="play-wordbank"></div>
+        </div>
+        <div class="win-banner hidden" id="play-winbanner">
+          <div class="big">🎉</div>
+          <h3>Solved it!</h3>
+          <p id="play-wintext"></p>
+          <button class="btn" onclick="exitPlay()" style="margin-top:14px;">Play another</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <span>Tanni's Desk Tools</span>
+  <a href="tannis-desk-tools.html">← Back to hub</a>
+</footer>
+
+<script>
+// ── WORD SEARCH ENGINE ──
+// Pure logic, no DOM. Returns {grid, placements, success, size} or {success:false, reason}
+
+const DIRS = {
+  E:  [0, 1],
+  W:  [0, -1],
+  S:  [1, 0],
+  N:  [-1, 0],
+  SE: [1, 1],
+  NW: [-1, -1],
+  SW: [1, -1],
+  NE: [-1, 1],
+};
+
+function normalizeWord(w) {
+  return w.toUpperCase().replace(/[^A-Z]/g, '');
+}
+
+function pickDirList(opts) {
+  // opts: {horizontal, vertical, diagonal, backward}
+  let list = [];
+  if (opts.horizontal) list.push('E');
+  if (opts.vertical) list.push('S');
+  if (opts.diagonal) list.push('SE', 'SW');
+  if (opts.backward) {
+    if (opts.horizontal) list.push('W');
+    if (opts.vertical) list.push('N');
+    if (opts.diagonal) list.push('NW', 'NE');
+  }
+  return list.length ? list : ['E']; // safety net
+}
+
+function tryPlaceWord(grid, size, word, dirList, rng) {
+  const attempts = 200;
+  for (let a = 0; a < attempts; a++) {
+    const dirKey = dirList[Math.floor(rng() * dirList.length)];
+    const [dr, dc] = DIRS[dirKey];
+    const len = word.length;
+
+    // valid start bounds so the word fits within the grid for this direction
+    const rMin = dr === 1 ? 0 : dr === -1 ? len - 1 : 0;
+    const rMax = dr === 1 ? size - len : dr === -1 ? size - 1 : size - 1;
+    const cMin = dc === 1 ? 0 : dc === -1 ? len - 1 : 0;
+    const cMax = dc === 1 ? size - len : dc === -1 ? size - 1 : size - 1;
+
+    if (rMin > rMax || cMin > cMax) continue;
+
+    const row = rMin + Math.floor(rng() * (rMax - rMin + 1));
+    const col = cMin + Math.floor(rng() * (cMax - cMin + 1));
+
+    let ok = true;
+    for (let i = 0; i < len; i++) {
+      const rr = row + dr * i;
+      const cc = col + dc * i;
+      const cell = grid[rr][cc];
+      if (cell !== null && cell !== word[i]) { ok = false; break; }
+    }
+    if (!ok) continue;
+
+    // commit
+    const cells = [];
+    for (let i = 0; i < len; i++) {
+      const rr = row + dr * i;
+      const cc = col + dc * i;
+      grid[rr][cc] = word[i];
+      cells.push([rr, cc]);
+    }
+    return { row, col, dir: dirKey, cells };
+  }
+  return null;
+}
+
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generatePuzzle(words, options) {
+  const opts = Object.assign({
+    size: 13,
+    horizontal: true,
+    vertical: true,
+    diagonal: true,
+    backward: true,
+    filler: '',
+    seed: null,
+  }, options);
+
+  const cleanWords = [...new Set(words.map(normalizeWord).filter(w => w.length >= 2))];
+  if (!cleanWords.length) return { success: false, reason: 'No valid words (need at least one word, 2+ letters, A-Z only).' };
+
+  const longest = Math.max(...cleanWords.map(w => w.length));
+  let size = Math.max(opts.size, longest);
+
+  const dirList = pickDirList(opts);
+  const rng = opts.seed != null ? mulberry32(opts.seed) : Math.random;
+
+  const sorted = [...cleanWords].sort((a, b) => b.length - a.length);
+
+  const maxGridRestarts = 40;
+  let result = null;
+
+  for (let restart = 0; restart < maxGridRestarts; restart++) {
+    const grid = Array.from({ length: size }, () => Array(size).fill(null));
+    const placements = [];
+    let failedWord = null;
+
+    for (const word of sorted) {
+      const placed = tryPlaceWord(grid, size, word, dirList, rng);
+      if (!placed) { failedWord = word; break; }
+      placements.push({ word, ...placed });
+    }
+
+    if (!failedWord) {
+      result = { grid, placements, size };
+      break;
+    }
+
+    // grow grid slightly if we keep failing and we're still small
+    if (restart > 0 && restart % 10 === 0 && size < 30) size += 1;
+  }
+
+  if (!result) {
+    return { success: false, reason: `Could not fit all ${sorted.length} words. Try a larger grid or fewer/shorter words.` };
+  }
+
+  // fill blanks
+  const fillerChars = (opts.filler || '').toUpperCase().replace(/[^A-Z]/g, '').split('');
+  let fillerIdx = 0;
+  const { grid } = result;
+  for (let r = 0; r < result.size; r++) {
+    for (let c = 0; c < result.size; c++) {
+      if (grid[r][c] === null) {
+        if (fillerChars.length) {
+          grid[r][c] = fillerChars[fillerIdx % fillerChars.length];
+          fillerIdx++;
+        } else {
+          grid[r][c] = String.fromCharCode(65 + Math.floor(rng() * 26));
+        }
+      }
+    }
+  }
+
+  return {
+    success: true,
+    size: result.size,
+    grid: result.grid,
+    placements: result.placements,
+    words: sorted,
+  };
+}
+
+
+// ── TABS ──
+function showTab(name) {
+  document.getElementById('panel-print').classList.toggle('on', name === 'print');
+  document.getElementById('panel-play').classList.toggle('on', name === 'play');
+  document.getElementById('tabbtn-print').classList.toggle('on', name === 'print');
+  document.getElementById('tabbtn-play').classList.toggle('on', name === 'play');
+}
+
+function parseWordInput(raw) {
+  return raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function showError(elId, msg) {
+  document.getElementById(elId).innerHTML = msg
+    ? `<div class="cx danger"><span class="cx-icon"><i class="ph-duotone ph-warning-octagon"></i></span><div>${msg}</div></div>`
+    : '';
+}
+
+// ── GRID RENDERING (shared by Print preview + Play) ──
+function renderGridDOM(containerId, puzzle, cellSize) {
+  const el = document.getElementById(containerId);
+  const n = puzzle.size;
+  el.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  el.innerHTML = '';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'puzzle-cell';
+      cell.textContent = puzzle.grid[r][c];
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.style.fontSize = cellSize || 'clamp(10px, 2.6vw, 16px)';
+      el.appendChild(cell);
+    }
+  }
+}
+
+function renderWordBank(containerId, words, foundSet) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = words.map(w => {
+    const word = typeof w === 'string' ? w : w.word;
+    const done = foundSet && foundSet.has(word);
+    return `<span class="wb-chip ${done ? 'done' : ''}" data-word="${word}">${word}</span>`;
+  }).join('');
+}
+
+// ════════════════════ PRINT MODE ════════════════════
+let printPuzzle = null;
+
+function runPrintGenerate() {
+  showError('p-error', '');
+  const words = parseWordInput(document.getElementById('p-words').value);
+  if (!words.length) { showError('p-error', 'Enter at least one word.'); return; }
+
+  const opts = {
+    size: parseInt(document.getElementById('p-size').value, 10),
+    horizontal: document.getElementById('p-horizontal').checked,
+    vertical: document.getElementById('p-vertical').checked,
+    diagonal: document.getElementById('p-diagonal').checked,
+    backward: document.getElementById('p-backward').checked,
+    filler: document.getElementById('p-filler').value,
+  };
+
+  const result = generatePuzzle(words, opts);
+  if (!result.success) {
+    showError('p-error', result.reason);
+    document.getElementById('p-previewcard').classList.add('hidden');
+    document.getElementById('p-pdfbtn').disabled = true;
+    return;
+  }
+
+  printPuzzle = result;
+  printPuzzle.title = document.getElementById('p-title').value.trim() || 'Word Search';
+  printPuzzle.includeAnswerKey = document.getElementById('p-answerkey').checked;
+
+  document.getElementById('p-previewcard').classList.remove('hidden');
+  document.getElementById('p-puzzletitle').textContent = printPuzzle.title;
+  renderGridDOM('p-grid', printPuzzle);
+  renderWordBank('p-wordbank', printPuzzle.words);
+  document.getElementById('p-pdfbtn').disabled = false;
+}
+
+async function exportPrintPDF() {
+  if (!printPuzzle) return;
+  const { PDFDocument, rgb, StandardFonts } = PDFLib;
+  const pdfDoc = await PDFDocument.create();
+  const fontReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontMono = await pdfDoc.embedFont(StandardFonts.Courier);
+
+  const PAGE_W = 612, PAGE_H = 792; // US Letter, points
+  const MARGIN = 50;
+
+  function drawPuzzlePage(showAnswers) {
+    const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+    page.drawText(printPuzzle.title, {
+      x: MARGIN, y: PAGE_H - 60, size: 20, font: fontBold, color: rgb(0.09, 0.05, 0.17),
+    });
+    page.drawText(showAnswers ? 'Answer Key' : 'Find all the words listed below', {
+      x: MARGIN, y: PAGE_H - 80, size: 11, font: fontReg, color: rgb(0.48, 0.43, 0.63),
+    });
+
+    const n = printPuzzle.size;
+    const gridTop = PAGE_H - 105;
+    const gridSize = Math.min(PAGE_W - MARGIN * 2, gridTop - 230);
+    const cell = gridSize / n;
+    const gridLeft = (PAGE_W - gridSize) / 2;
+
+    // grid border
+    page.drawRectangle({
+      x: gridLeft, y: gridTop - gridSize, width: gridSize, height: gridSize,
+      borderColor: rgb(0.09, 0.05, 0.17), borderWidth: 1.5,
+    });
+
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const letter = printPuzzle.grid[r][c];
+        const cx = gridLeft + c * cell + cell / 2;
+        const cy = gridTop - r * cell - cell / 2;
+        const fsize = Math.min(cell * 0.55, 14);
+        page.drawText(letter, {
+          x: cx - fsize * 0.32, y: cy - fsize * 0.36, size: fsize, font: fontMono, color: rgb(0.09, 0.05, 0.17),
+        });
+      }
+    }
+
+    if (showAnswers) {
+      for (const p of printPuzzle.placements) {
+        const dirs = { E: [0, 1], W: [0, -1], S: [1, 0], N: [-1, 0], SE: [1, 1], NW: [-1, -1], SW: [1, -1], NE: [-1, 1] };
+        const [dr, dc] = dirs[p.dir];
+        const len = p.word.length;
+        const x1 = gridLeft + p.col * cell + cell / 2;
+        const y1 = gridTop - p.row * cell - cell / 2;
+        const x2 = gridLeft + (p.col + dc * (len - 1)) * cell + cell / 2;
+        const y2 = gridTop - (p.row + dr * (len - 1)) * cell - cell / 2;
+        page.drawLine({
+          start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
+          thickness: Math.max(cell * 0.5, 6), color: rgb(0.42, 0.29, 0.69), opacity: 0.35,
+        });
+      }
+    }
+
+    // word bank below grid
+    const bankTop = gridTop - gridSize - 26;
+    page.drawText('WORD LIST', { x: MARGIN, y: bankTop, size: 10, font: fontBold, color: rgb(0.42, 0.29, 0.69) });
+    const wordList = printPuzzle.words.join('   •   ');
+    const wrapped = wrapText(wordList, fontReg, 10, PAGE_W - MARGIN * 2);
+    wrapped.forEach((line, i) => {
+      page.drawText(line, { x: MARGIN, y: bankTop - 18 - i * 14, size: 10, font: fontReg, color: rgb(0.24, 0.18, 0.42) });
+    });
+
+    page.drawText("Tanni's Desk Tools", { x: MARGIN, y: 30, size: 8, font: fontReg, color: rgb(0.6, 0.6, 0.6) });
+  }
+
+  function wrapText(text, font, size, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  drawPuzzlePage(false);
+  if (printPuzzle.includeAnswerKey) drawPuzzlePage(true);
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (printPuzzle.title || 'word-search').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.pdf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// ════════════════════ PLAY MODE ════════════════════
+const PACKS = [
+  {
+    id: 'core-measures',
+    name: 'Core Measures',
+    icon: 'ph-pulse',
+    wordSets: [
+      ['STROKE', 'SEPSIS', 'ABSTRACTION', 'MEASURE', 'QUALITY', 'TIMEZERO', 'DISCHARGE', 'BUNDLE', 'CLINICAL', 'SPECIFICATION'],
+      ['DENOMINATOR', 'NUMERATOR', 'EXCLUSION', 'CHART', 'ABSTRACTOR', 'COMPLIANCE', 'AUDIT', 'VALIDATION', 'REPORTING', 'OUTCOME'],
+      ['JOINTCOMMISSION', 'ACCREDITATION', 'PERFORMANCE', 'BENCHMARK', 'REIMBURSEMENT', 'SAMPLING', 'POPULATION', 'ALGORITHM', 'RATIONALE', 'DOCUMENTATION'],
+    ],
+  },
+  {
+    id: 'stroke',
+    name: 'Stroke (STK)',
+    icon: 'ph-brain',
+    wordSets: [
+      ['LASTKNOWNWELL', 'ANTITHROMBOTIC', 'ANTICOAGULATION', 'STATIN', 'DYSPHAGIA', 'THROMBOLYTIC', 'ISCHEMIC', 'HEMORRHAGIC', 'NIHSS', 'CAROTID'],
+      ['COMFORTMEASURES', 'CODESTROKE', 'ASPIRIN', 'WARFARIN', 'APIXABAN', 'ATORVASTATIN', 'DEFICIT', 'ARRIVAL', 'EDUCATION', 'REHABILITATION'],
+      ['SYMPTOMONSET', 'OCCLUSION', 'THROMBECTOMY', 'INFARCT', 'NEUROLOGIST', 'TELESTROKE', 'AMBULANCE', 'IMAGING', 'PERFUSION', 'DISCHARGEPLAN'],
+    ],
+  },
+  {
+    id: 'sepsis',
+    name: 'Sepsis (SEP-1)',
+    icon: 'ph-chart-line-up',
+    wordSets: [
+      ['TIMEZERO', 'LACTATE', 'BLOODCULTURE', 'BROADSPECTRUM', 'CRYSTALLOID', 'VASOPRESSOR', 'HYPOTENSION', 'BUNDLE', 'SEPTICSHOCK', 'REASSESSMENT'],
+      ['SIRS', 'ORGANDYSFUNCTION', 'TACHYCARDIA', 'TACHYPNEA', 'FLUIDRESUSCITATION', 'ANTIBIOTIC', 'PERFUSION', 'INFECTION', 'PRESSOR', 'CAPILLARYREFILL'],
+      ['SEPTICEMIA', 'BACTEREMIA', 'TEMPERATURE', 'LEUKOCYTOSIS', 'MOTTLING', 'RESUSCITATION', 'CLINICIAN', 'DOCUMENTATION', 'SOURCE', 'SUSPECTED'],
+    ],
+  },
+  {
+    id: 'hbips',
+    name: 'HBIPS',
+    icon: 'ph-chat-circle-dots',
+    wordSets: [
+      ['RESTRAINT', 'SECLUSION', 'EPISODE', 'STRATA', 'CEILING', 'PSYCHIATRIC', 'INPATIENT', 'DENOMINATOR', 'THERAPEUTIC', 'BEHAVIORAL'],
+      ['MULTIASSAULT', 'DEESCALATION', 'OBSERVATION', 'LEAVEDAYS', 'UNQUANTIFIABLE', 'DISCHARGEPLAN', 'CONTINUINGCARE', 'AGGRESSION', 'MEDICATION', 'SAFETYPLAN'],
+      ['ADMISSION', 'CRISIS', 'UNITLEVEL', 'NURSING', 'EVENTTYPE', 'DURATION', 'MINUTES', 'REASSESSMENT', 'TREATMENT', 'FOLLOWUP'],
+    ],
+  },
+  {
+    id: 'vte',
+    name: 'VTE Prophylaxis',
+    icon: 'ph-drop-half-bottom',
+    wordSets: [
+      ['THROMBOEMBOLISM', 'PROPHYLAXIS', 'ANTICOAGULANT', 'HEPARIN', 'ENOXAPARIN', 'COMPRESSION', 'EMBOLISM', 'THROMBOSIS', 'RISKASSESSMENT', 'CONTRAINDICATION'],
+      ['MECHANICAL', 'PHARMACOLOGIC', 'INTERMITTENT', 'PNEUMATIC', 'BLEEDING', 'OVERLAPTHERAPY', 'DIAGNOSTICTEST', 'TREATMENT', 'ADMISSION', 'CONFIRMED'],
+      ['STOCKINGS', 'CATHETER', 'IMMOBILITY', 'SURGICAL', 'MEDICAL', 'ORDERSET', 'MONITORING', 'EXTREMITY', 'ULTRASOUND', 'PREVENTABLE'],
+    ],
+  },
+  {
+    id: 'colonoscopy',
+    name: 'Colonoscopy & Endoscopy',
+    icon: 'ph-magnifying-glass',
+    wordSets: [
+      ['COLONOSCOPY', 'POLYPECTOMY', 'SURVEILLANCE', 'ADENOMA', 'BIOPSY', 'INTERVAL', 'SCREENING', 'ENDOSCOPIST', 'SEDATION', 'PATHOLOGY'],
+      ['CECUM', 'INTUBATION', 'WITHDRAWAL', 'PREPARATION', 'DYSPLASIA', 'AVERAGERISK', 'HISTORY', 'RECOMMENDATION', 'FOLLOWUP', 'GASTROENTEROLOGY'],
+      ['POLYP', 'TUBULAR', 'VILLOUS', 'RESECTION', 'BOWEL', 'OVERUSE', 'GUIDELINE', 'OUTPATIENT', 'PROCEDURE', 'DOCUMENTATION'],
+    ],
+  },
+  {
+    id: 'pnw',
+    name: 'Pacific Northwest',
+    icon: 'ph-tree-evergreen',
+    wordSets: [
+      ['RAINFOREST', 'FERRY', 'SALMON', 'EVERGREEN', 'OLYMPICS', 'CASCADES', 'TIDEPOOL', 'TRAIL', 'DRIZZLE', 'COFFEE'],
+      ['ORCA', 'GEODUCK', 'DOUGLASFIR', 'VOLCANO', 'KAYAK', 'LAVENDER', 'MARITIME', 'GLACIER', 'WATERFALL', 'MOSS'],
+      ['SOUND', 'PENINSULA', 'LIGHTHOUSE', 'TIMBER', 'FOGGY', 'ESPRESSO', 'HIKING', 'ISLAND', 'CEDAR', 'OYSTER'],
+    ],
+  },
+];
+
+function renderPackGrid() {
+  const el = document.getElementById('pack-grid');
+  el.innerHTML = PACKS.map(p => `
+    <div class="pack-card" onclick="startPackPlay('${p.id}')">
+      <div class="pack-icon"><i class="ph-duotone ${p.icon}"></i></div>
+      <div class="pack-name">${p.name}</div>
+      <div class="pack-meta">${p.wordSets[0].length} words</div>
+    </div>
+  `).join('');
+}
+
+function startPackPlay(id) {
+  const pack = PACKS.find(p => p.id === id);
+  if (!pack) return;
+  const words = pack.wordSets[Math.floor(Math.random() * pack.wordSets.length)];
+  const result = generatePuzzle(words, { size: 13, horizontal: true, vertical: true, diagonal: true, backward: true });
+  if (!result.success) { showError('play-error', result.reason); return; }
+  result.title = pack.name;
+  beginPlay(result);
+}
+
+function startCustomPlay() {
+  showError('play-error', '');
+  const words = parseWordInput(document.getElementById('play-words').value);
+  if (!words.length) { showError('play-error', 'Enter at least one word.'); return; }
+  const size = parseInt(document.getElementById('play-size').value, 10);
+  const result = generatePuzzle(words, { size, horizontal: true, vertical: true, diagonal: true, backward: true });
+  if (!result.success) { showError('play-error', result.reason); return; }
+  result.title = 'Custom Puzzle';
+  beginPlay(result);
+}
+
+// ── play state ──
+let playState = null;
+let playTimerInterval = null;
+
+function beginPlay(puzzle) {
+  document.getElementById('play-setup').classList.add('hidden');
+  document.getElementById('play-game').classList.remove('hidden');
+  document.getElementById('play-winbanner').classList.add('hidden');
+
+  const foundSet = new Set();
+  playState = {
+    puzzle,
+    foundSet,
+    selecting: false,
+    selStart: null,
+    selCells: [],
+    startTime: Date.now(),
+  };
+
+  document.getElementById('play-title').textContent = puzzle.title;
+  document.getElementById('play-totalcount').textContent = puzzle.words.length;
+  document.getElementById('play-foundcount').textContent = '0';
+  renderGridDOM('play-grid', puzzle, 'clamp(11px, 3.6vw, 18px)');
+  renderWordBank('play-wordbank', puzzle.words, foundSet);
+  attachGridHandlers();
+
+  if (playTimerInterval) clearInterval(playTimerInterval);
+  playTimerInterval = setInterval(updatePlayTimer, 1000);
+  updatePlayTimer();
+}
+
+function updatePlayTimer() {
+  if (!playState) return;
+  const secs = Math.floor((Date.now() - playState.startTime) / 1000);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  document.getElementById('play-timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function exitPlay() {
+  document.getElementById('play-setup').classList.remove('hidden');
+  document.getElementById('play-game').classList.add('hidden');
+  if (playTimerInterval) { clearInterval(playTimerInterval); playTimerInterval = null; }
+  playState = null;
+}
+
+function cellKey(r, c) { return r + ',' + c; }
+
+function attachGridHandlers() {
+  const grid = document.getElementById('play-grid');
+  const cells = grid.querySelectorAll('.puzzle-cell');
+
+  function getRC(target) {
+    if (!target || !target.dataset || target.dataset.r === undefined) return null;
+    return { r: parseInt(target.dataset.r, 10), c: parseInt(target.dataset.c, 10) };
+  }
+
+  function startSel(target) {
+    const rc = getRC(target);
+    if (!rc) return;
+    playState.selecting = true;
+    playState.selStart = rc;
+    playState.selCells = [rc];
+    paintSelection();
+  }
+
+  function moveSel(target) {
+    if (!playState.selecting) return;
+    const rc = getRC(target);
+    if (!rc) return;
+    const start = playState.selStart;
+    const dr = Math.sign(rc.r - start.r);
+    const dc = Math.sign(rc.c - start.c);
+    // only allow straight lines: horizontal, vertical, or 45° diagonal
+    const rowDiff = Math.abs(rc.r - start.r);
+    const colDiff = Math.abs(rc.c - start.c);
+    if (!(dr === 0 || dc === 0 || rowDiff === colDiff)) return;
+    const len = Math.max(rowDiff, colDiff) + 1;
+    const path = [];
+    for (let i = 0; i < len; i++) path.push({ r: start.r + dr * i, c: start.c + dc * i });
+    playState.selCells = path;
+    paintSelection();
+  }
+
+  function endSel() {
+    if (!playState.selecting) return;
+    playState.selecting = false;
+    checkSelection();
+  }
+
+  cells.forEach(cell => {
+    cell.addEventListener('mousedown', e => { e.preventDefault(); startSel(cell); });
+    cell.addEventListener('mouseenter', () => moveSel(cell));
+  });
+  document.addEventListener('mouseup', endSel);
+
+  // touch support
+  grid.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    startSel(el);
+  }, { passive: false });
+  grid.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    moveSel(el);
+  }, { passive: false });
+  grid.addEventListener('touchend', e => { e.preventDefault(); endSel(); });
+}
+
+function paintSelection() {
+  const grid = document.getElementById('play-grid');
+  grid.querySelectorAll('.puzzle-cell').forEach(c => {
+    const r = parseInt(c.dataset.r, 10), col = parseInt(c.dataset.c, 10);
+    const inSel = playState.selCells.some(s => s.r === r && s.c === col);
+    c.classList.toggle('sel', inSel && !c.classList.contains('found'));
+  });
+}
+
+function checkSelection() {
+  const path = playState.selCells;
+  if (path.length < 2) { clearSelectionPaint(); return; }
+  const letters = path.map(p => playState.puzzle.grid[p.r][p.c]).join('');
+  const lettersRev = letters.split('').reverse().join('');
+
+  const match = playState.puzzle.words.find(w => w === letters || w === lettersRev);
+  if (match && !playState.foundSet.has(match)) {
+    playState.foundSet.add(match);
+    path.forEach(p => {
+      const el = document.querySelector(`#play-grid .puzzle-cell[data-r="${p.r}"][data-c="${p.c}"]`);
+      if (el) { el.classList.remove('sel'); el.classList.add('found'); }
+    });
+    renderWordBank('play-wordbank', playState.puzzle.words, playState.foundSet);
+    document.getElementById('play-foundcount').textContent = playState.foundSet.size;
+    if (playState.foundSet.size === playState.puzzle.words.length) {
+      onPuzzleSolved();
+    }
+  } else {
+    clearSelectionPaint();
+  }
+  playState.selCells = [];
+}
+
+function clearSelectionPaint() {
+  document.querySelectorAll('#play-grid .puzzle-cell.sel').forEach(c => c.classList.remove('sel'));
+}
+
+function onPuzzleSolved() {
+  if (playTimerInterval) { clearInterval(playTimerInterval); playTimerInterval = null; }
+  const secs = Math.floor((Date.now() - playState.startTime) / 1000);
+  const m = Math.floor(secs / 60), s = secs % 60;
+  document.getElementById('play-wintext').textContent =
+    `All ${playState.puzzle.words.length} words found in ${m}:${s.toString().padStart(2, '0')}.`;
+  document.getElementById('play-winbanner').classList.remove('hidden');
+}
+
+renderPackGrid();
+
+</script>
+</body>
+</html>
