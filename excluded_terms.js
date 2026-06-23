@@ -51,4 +51,10 @@ const EXCLUDED_TERMS = [
   'sig takes',
   'takes',
   'then once before bed',
+  'by mouth',
+  'by mouth every',
+  'dormir',
+  'tab',
+  'tome',
+  'pldoras por va',
 ];
