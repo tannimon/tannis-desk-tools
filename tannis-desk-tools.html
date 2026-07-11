@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tanni's Desk Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Purple palette (lighter purple from the med identifier tool) */
+  --purple:#6b4ab0;
+  --purple2:#8b6fcc;
+  --purple3:#a98fdc;
+  --purple4:#c4adec;
+  --purple-pale:#f3f0ff;
+  --purple-mid:#ddd4f8;
+  --purple-deep:#3a2070;
+
+  /* Dark sidebar */
+  --sidebar-bg:#1a1228;
+  --sidebar-border:rgba(255,255,255,.08);
+  --sidebar-text:rgba(255,255,255,.75);
+  --sidebar-text-dim:rgba(255,255,255,.38);
+  --sidebar-hover:rgba(139,111,204,.18);
+  --sidebar-active:rgba(139,111,204,.22);
+
+  /* Main content */
+  --canvas:#f5f3ff;
+  --card-bg:#ffffff;
+  --card-border:#e8e3f8;
+  --card-hover-border:#a98fdc;
+  --ink:#160e2c;
+  --ink-mid:#3d2f6b;
+  --ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+
+  /* Category tag colors */
+  --tag-stk-bg:#ede8fb;  --tag-stk:#6b4ab0;
+  --tag-sep-bg:#e8f3fb;  --tag-sep:#1d6fa4;
+  --tag-bh-bg:#fdf0e8;   --tag-bh:#a05a1a;
+  --tag-ref-bg:#e8fbf0;  --tag-ref:#1a7a4a;
+  --tag-game-bg:#fce8f3; --tag-game:#a01a6b;
+
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+  --radius:10px;
+  --sidebar-w:240px;
+  --header-h:52px;
+}
+
+html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{background:var(--canvas);color:var(--ink);font-size:15px;line-height:1.6;overflow:hidden;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);
+  min-width:var(--sidebar-w);
+  background:var(--sidebar-bg);
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid var(--sidebar-border);
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.12) transparent;
+  z-index:10;
+  transition:width .25s ease, min-width .25s ease;
+}
+.sidebar.collapsed{width:0;min-width:0;overflow:hidden;}
+
+/* Brand */
+.brand{
+  padding:18px 20px 16px;
+  border-bottom:1px solid var(--sidebar-border);
+  flex-shrink:0;
+}
+.brand-name{
+  font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px;
+  display:flex;align-items:center;gap:8px;
+}
+.brand-icon{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,var(--purple),var(--purple3));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.brand-icon i{font-size:15px;color:#fff;}
+.brand-sub{font-size:11px;color:var(--sidebar-text-dim);margin-top:3px;letter-spacing:.2px;}
+
+/* Nav sections */
+.nav-section{padding:8px 0 4px;}
+.nav-section-label{
+  padding:6px 16px 4px;
+  font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--sidebar-text-dim);
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 14px 7px 16px;
+  cursor:pointer;border-radius:5px;margin:1px 6px;
+  color:var(--sidebar-text);font-size:13.5px;
+  transition:background .15s, color .15s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  border:none;background:transparent;width:calc(100% - 12px);text-align:left;
+}
+.nav-item i{font-size:18px;flex-shrink:0;color:var(--purple3);}
+.nav-item:hover{background:var(--sidebar-hover);color:#fff;}
+.nav-item.active{background:var(--sidebar-active);color:#fff;}
+.nav-item .nav-tag{
+  margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.4px;
+  background:rgba(169,143,220,.2);color:var(--purple4);
+  padding:2px 6px;border-radius:3px;flex-shrink:0;
+}
+
+.sidebar-divider{height:1px;background:var(--sidebar-border);margin:6px 14px;}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* Header bar */
+.topbar{
+  height:var(--header-h);flex-shrink:0;
+  background:var(--sidebar-bg);
+  border-bottom:1px solid var(--sidebar-border);
+  display:flex;align-items:center;gap:10px;padding:0 18px;
+}
+.topbar-toggle{
+  background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;
+  color:rgba(255,255,255,.6);transition:color .15s, background .15s;
+}
+.topbar-toggle:hover{background:rgba(255,255,255,.08);color:#fff;}
+.topbar-toggle i{font-size:20px;display:block;}
+
+.search-wrap{flex:1;max-width:360px;position:relative;}
+.search-wrap i{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  font-size:16px;color:rgba(255,255,255,.35);pointer-events:none;
+}
+.search-input{
+  width:100%;height:34px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);border-radius:7px;
+  color:#fff;font-family:var(--font);font-size:13.5px;
+  padding:0 12px 0 34px;
+  outline:none;transition:border-color .15s, background .15s;
+}
+.search-input::placeholder{color:rgba(255,255,255,.35);}
+.search-input:focus{background:rgba(255,255,255,.12);border-color:var(--purple3);}
+
+.topbar-hint{font-size:11.5px;color:rgba(255,255,255,.3);margin-left:4px;
+  white-space:nowrap;display:none;}
+@media(min-width:640px){.topbar-hint{display:block;}}
+
+.topbar-spacer{flex:1;}
+.topbar-brand{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);
+  display:none;white-space:nowrap;}
+
+/* Content scroll area */
+.content{flex:1;overflow-y:auto;padding:28px 28px 48px;scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;}
+
+/* ── HOME VIEW ── */
+.home-hero{margin-bottom:28px;}
+.home-hero h1{
+  font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.4px;
+  margin-bottom:4px;
+}
+.home-hero p{font-size:14px;color:var(--ink-soft);max-width:560px;}
+
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--ink-soft);margin-bottom:14px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+.tool-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:12px;
+  margin-bottom:32px;
+}
+
+.tool-card{
+  background:var(--card-bg);
+  border:2px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:18px 18px 16px;
+  cursor:pointer;
+  transition:border-color .2s, box-shadow .2s, transform .1s;
+  display:flex;flex-direction:column;gap:10px;
+  text-decoration:none;color:inherit;
+}
+.tool-card:hover{
+  border-color:var(--card-hover-border);
+  box-shadow:0 4px 20px rgba(107,74,176,.12);
+  transform:translateY(-1px);
+}
+.tool-card:active{transform:translateY(0);}
+
+.tool-card-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.tool-card-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--purple-pale);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.tool-card-icon i{font-size:26px;color:var(--purple);}
+
+.tool-tag{
+  font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;
+}
+.tag-stk{background:var(--tag-stk-bg);color:var(--tag-stk);}
+.tag-sep{background:var(--tag-sep-bg);color:var(--tag-sep);}
+.tag-bh{background:var(--tag-bh-bg);color:var(--tag-bh);}
+.tag-ref{background:var(--tag-ref-bg);color:var(--tag-ref);}
+.tag-game{background:var(--tag-game-bg);color:var(--tag-game);}
+
+.tool-card-name{font-size:15px;font-weight:700;color:var(--ink);line-height:1.3;}
+.tool-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.55;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  transition:all .2s ease;}
+.tool-card:hover .tool-card-desc{
+  display:block;overflow:visible;-webkit-line-clamp:unset;
+}
+.tool-card-link{
+  font-size:12px;font-weight:600;color:var(--purple);
+  display:flex;align-items:center;gap:4px;margin-top:auto;
+}
+.tool-card-link i{font-size:14px;}
+
+/* ── STAY CURRENT BAND ── */
+.stay-section{margin-bottom:22px;}
+.stay-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stay-card{display:flex;align-items:center;gap:15px;cursor:pointer;
+  background:var(--card-bg);border:2px solid var(--card-border);border-radius:var(--radius);
+  padding:16px 18px;text-decoration:none;color:inherit;
+  transition:border-color .2s,box-shadow .2s,transform .1s;}
+.stay-card:hover{border-color:var(--card-hover-border);
+  box-shadow:0 4px 20px rgba(107,74,176,.12);transform:translateY(-1px);}
+.sti-icon{width:46px;height:46px;border-radius:11px;background:var(--purple-pale);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sti-icon i{font-size:26px;color:var(--purple);}
+.sti-body{flex:1;min-width:0;}
+.sti-title{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.sti-badge{font-size:9px;font-weight:700;letter-spacing:.5px;color:#fff;background:var(--purple);
+  padding:2px 6px;border-radius:4px;}
+.sti-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin-top:3px;}
+.sti-cta{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;
+  color:var(--purple);flex-shrink:0;white-space:nowrap;}
+.sti-cta i{font-size:15px;}
+@media(max-width:760px){.stay-grid{grid-template-columns:1fr;}}
+@media(max-width:560px){.stay-card{flex-wrap:wrap;}
+  .sti-cta{width:100%;justify-content:flex-end;}}
+
+/* ── ABSTRACTION SUB-SECTION LABELS ── */
+.subsection-label{font-size:12px;font-weight:600;color:var(--ink-mid);
+  letter-spacing:.2px;margin:16px 0 9px;padding-left:2px;}
+.nav-subsection-label{padding:6px 16px 3px 22px;font-size:9.5px;font-weight:700;
+  letter-spacing:.6px;text-transform:uppercase;color:var(--sidebar-text-dim);opacity:.85;}
+/* Single-card sub-groups pack side by side to save vertical space */
+.subgroup-compact{margin-top:16px;}
+.subgroup-compact .subsection-label{margin:0 0 9px;}
+.subgroup-col{display:flex;flex-direction:column;}
+.subgroup-col .tool-card{width:100%;flex:1 1 auto;}
+
+/* ── TOOL VIEWER PANEL ── */
+.tool-panel{
+  position:fixed;inset:0;
+  background:var(--canvas);
+  z-index:100;
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.tool-panel.open{transform:translateX(0);}
+
+.panel-header{
+  height:var(--header-h);flex-shrink:0;
+  background:var(--sidebar-bg);
+  display:flex;align-items:center;gap:10px;
+  padding:0 16px;
+  border-bottom:1px solid var(--sidebar-border);
+}
+.panel-back{
+  background:none;border:none;cursor:pointer;
+  padding:6px 8px;border-radius:6px;
+  display:flex;align-items:center;gap:6px;
+  color:rgba(255,255,255,.7);font-family:var(--font);font-size:13.5px;
+  transition:color .15s, background .15s;
+}
+.panel-back:hover{background:rgba(255,255,255,.1);color:#fff;}
+.panel-back i{font-size:18px;}
+
+.panel-title{font-size:14px;font-weight:700;color:#fff;flex:1;}
+.panel-tag-wrap{margin-left:auto;}
+
+.panel-iframe{flex:1;border:none;width:100%;display:block;}
+
+/* ── EMPTY / NO RESULTS ── */
+.no-results{
+  padding:48px 0;text-align:center;color:var(--ink-soft);
+}
+.hidden{display:none !important;}
+.no-results i{font-size:36px;opacity:.4;display:block;margin-bottom:12px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .topbar-brand{display:block;}
+  .content{padding:20px 16px 40px;}
+  .tool-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:400px){
+  .tool-grid{grid-template-columns:1fr;}
+}
+
+/* ── OBSERVANCE CALLOUT ── */
+#observanceBar{margin-bottom:20px;display:none;}
+.obs-wrap{
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  overflow:hidden;
+}
+.obs-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px 10px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--purple-pale);
+}
+.obs-header-label{
+  font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--purple2);flex:1;
+}
+.obs-nav{display:flex;gap:4px;align-items:center;}
+.obs-nav button{
+  background:none;border:none;cursor:pointer;
+  color:var(--purple3);padding:2px 5px;border-radius:4px;
+  font-size:14px;line-height:1;transition:background .15s;
+}
+.obs-nav button:hover{background:var(--purple-mid);}
+.obs-counter{font-size:11px;font-family:var(--mono);color:var(--ink-soft);}
+.obs-slides{position:relative;min-height:58px;}
+.obs-slide{
+  display:none;
+  padding:12px 16px;
+  align-items:center;gap:14px;
+}
+.obs-slide.active{display:flex;animation:fadeUp .2s ease both;}
+.obs-emoji{font-size:26px;line-height:1;flex-shrink:0;}
+.obs-body{}
+.obs-name{font-size:14px;font-weight:700;color:var(--ink);line-height:1.3;}
+.obs-desc{font-size:12px;color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+.obs-pill{
+  display:inline-block;margin-top:4px;
+  font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;
+}
+/* pill colors by category */
+.obs-pill.healthcare{background:#ede8fb;color:#6b4ab0;}
+.obs-pill.heritage{background:#e8f3fb;color:#1d6fa4;}
+.obs-pill.awareness{background:#fdf0e8;color:#a05a1a;}
+.obs-pill.inclusion{background:#e8fbf0;color:#1a7a4a;}
+.obs-pill.worker{background:#f3f0ff;color:#6b4ab0;}
+.obs-pill.general{background:#f5f5f5;color:#555;}
+
+/* Focus */
+:focus-visible{outline:2px solid var(--purple3);outline-offset:2px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ══ TOOL VIEWER PANEL ══ -->
+<div class="tool-panel" id="toolPanel" role="dialog" aria-modal="true" aria-label="Tool viewer">
+  <div class="panel-header">
+    <button class="panel-back" onclick="closePanel()" aria-label="Back to all tools">
+      <i class="ph ph-arrow-left"></i>
+      All tools
+    </button>
+    <div class="panel-title" id="panelTitle">Tool</div>
+    <div class="panel-tag-wrap" id="panelTag"></div>
+  </div>
+  <iframe class="panel-iframe" id="panelFrame" title="Tool" src="" allowfullscreen></iframe>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Tool categories">
+
+    <div class="brand">
+      <div class="brand-name">
+        <div class="brand-icon"><i class="ph-fill ph-desk"></i></div>
+        Tanni's Desk Tools
+      </div>
+      <div class="brand-sub">Core measure abstraction toolkit</div>
+    </div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">All tools</div>
+      <button class="nav-item active" onclick="filterTools('all')" id="nav-all">
+        <i class="ph ph-squares-four"></i> All tools <span class="nav-tag">14</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Stay Current</div>
+      <button class="nav-item" onclick="openTool('spec-tracker')" id="navbtn-spec-tracker">
+        <i class="ph ph-git-diff"></i> Spec Tracker
+      </button>
+      <button class="nav-item" onclick="openTool('audit-countdown')" id="navbtn-audit-countdown">
+        <i class="ph ph-calendar-check"></i> Quality Calendar
+      </button>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Analytics</div>
+      <button class="nav-item" onclick="openTool('fallout-dashboard')" id="navbtn-fallout-dashboard">
+        <i class="ph ph-gauge"></i> Fallout Dashboard
+      </button>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Abstraction Tools</div>
+      <button class="nav-item" onclick="filterTools('abstraction')" id="nav-abstraction">
+        <i class="ph ph-squares-four"></i> All abstraction <span class="nav-tag">6</span>
+      </button>
+      <div class="nav-subsection-label">Stroke Measure</div>
+      <button class="nav-item" onclick="openTool('stk-med')" id="navbtn-stk-med">
+        <i class="ph ph-pill"></i> STK Med Identifier
+      </button>
+      <button class="nav-item" onclick="openTool('lkw')" id="navbtn-lkw">
+        <i class="ph ph-clock-countdown"></i> LKW Tool
+      </button>
+      <button class="nav-item" onclick="openTool('cmo')" id="navbtn-cmo">
+        <i class="ph ph-heart-straight"></i> CMO Tool
+      </button>
+      <div class="nav-subsection-label">Sepsis</div>
+      <button class="nav-item" onclick="openTool('sep1')" id="navbtn-sep1">
+        <i class="ph ph-chart-line-up"></i> SEP-1 Tool
+      </button>
+      <div class="nav-subsection-label">Behavioral Health</div>
+      <button class="nav-item" onclick="openTool('hbips')" id="navbtn-hbips">
+        <i class="ph ph-chat-circle-dots"></i> HBIPS Tool
+      </button>
+      <div class="nav-subsection-label">General</div>
+      <button class="nav-item" onclick="openTool('med-compare')" id="navbtn-med-compare">
+        <i class="ph ph-arrows-left-right"></i> Med Source Comparison
+      </button>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Utilities</div>
+      <button class="nav-item" onclick="openTool('timekeeping')" id="navbtn-timekeeping">
+        <i class="ph ph-clock"></i> Timekeeping Calc
+      </button>
+      <button class="nav-item" onclick="openTool('focus')" id="navbtn-focus">
+        <i class="ph ph-timer"></i> Focus &amp; Sound
+      </button>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Games</div>
+      <button class="nav-item" onclick="openTool('abstractly')" id="navbtn-abstractly">
+        <i class="ph ph-game-controller"></i> Abstractly
+      </button>
+      <button class="nav-item" onclick="openTool('wordsearch')" id="navbtn-wordsearch">
+        <i class="ph ph-puzzle-piece"></i> Word Search Builder
+      </button>
+      <button class="nav-item" onclick="openTool('audittrail')" id="navbtn-audittrail">
+        <i class="ph ph-heartbeat"></i> Audit Trail
+      </button>
+    </nav>
+
+
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <button class="topbar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <i class="ph ph-list"></i>
+      </button>
+
+      <div class="search-wrap">
+        <i class="ph ph-magnifying-glass"></i>
+        <input class="search-input" type="text" id="searchInput"
+          placeholder="Search tools…" aria-label="Search tools"
+          oninput="searchTools(this.value)">
+      </div>
+
+      <span class="topbar-hint">Press / to search</span>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-brand">🔮 Tanni's Desk Tools</div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="content" id="mainContent">
+
+      <div class="home-hero" id="homeHero">
+        <h1>Tanni's Desk Tools</h1>
+        <p>Work utility and abstraction tools for core measures.<br>Open any tool — it runs right here in the same window.</p>
+      </div>
+
+      <!-- OBSERVANCE CALLOUT — rendered by JS, only visible on relevant dates -->
+      <div id="observanceBar">
+        <div class="obs-wrap">
+          <div class="obs-header">
+            <span class="obs-header-label">Today we recognize</span>
+            <div class="obs-nav">
+              <button id="obsPrev" onclick="obsNav(-1)" title="Previous">&#8249;</button>
+              <span class="obs-counter" id="obsCounter"></span>
+              <button id="obsNext" onclick="obsNav(1)" title="Next">&#8250;</button>
+            </div>
+          </div>
+          <div class="obs-slides" id="obsSlides"></div>
+        </div>
+      </div>
+
+      <div class="stay-section" id="stayCurrent">
+        <div class="section-label">Stay Current</div>
+        <div class="stay-grid">
+          <a class="stay-card" href="spec-tracker.html" target="_blank" rel="noopener">
+            <div class="sti-icon"><i class="ph-duotone ph-git-diff"></i></div>
+            <div class="sti-body">
+              <div class="sti-title">Spec Tracker <span class="sti-badge">NEW</span></div>
+              <div class="sti-desc">Track TJC and CMS specification releases, compare changes between versions, and jump directly to the official source manuals.</div>
+            </div>
+            <span class="sti-cta">Opens in new tab <i class="ph ph-arrow-square-out"></i></span>
+          </a>
+          <div class="stay-card" onclick="openTool('audit-countdown')" tabindex="0" role="button"
+            onkeydown="if(event.key==='Enter'||event.key===' ')openTool('audit-countdown')" aria-label="Open Quality Reporting Calendar">
+            <div class="sti-icon"><i class="ph-duotone ph-calendar-check"></i></div>
+            <div class="sti-body">
+              <div class="sti-title">Quality Reporting Calendar</div>
+              <div class="sti-desc">CMS and TJC reporting deadlines in one place — what to submit, what's included, and how much time remains before each event.</div>
+            </div>
+            <span class="sti-cta">Open tool <i class="ph ph-arrow-right"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBSERVANCE CALLOUT — rendered by JS, only visible on relevant dates -->
+      <div id="observanceBar-placeholder" style="display:none;"></div>
+
+      <div id="allSection">
+        <div class="section-label" id="sectionLabel">All the tools</div>
+        <div class="tool-grid" id="toolGrid"></div>
+        <div id="groupedSections"></div>
+      </div>
+
+      <div class="no-results" id="noResults" style="display:none;">
+        <i class="ph ph-magnifying-glass"></i>
+        <p>No tools match that search.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── NEW-TAB TOOLS — defined first so makeCard can reference it ──
+const NEW_TAB_TOOLS = ['spec-tracker', 'focus', 'timekeeping', 'abstractly', 'wordsearch', 'audittrail'];
+
+// ── TOOL REGISTRY ──
+const TOOLS = [
+  {
+    id: 'spec-tracker',
+    name: 'Spec Tracker',
+    desc: 'Track TJC and CMS specification releases, compare changes between versions, and jump directly to the official source manuals.',
+    icon: 'ph-git-diff',
+    tag: 'SPECS',
+    tagClass: 'tag-ref',
+    category: 'stay',
+    src: 'spec-tracker.html',
+  },
+  {
+    id: 'stk-med',
+    name: 'STK Med Identifier',
+    desc: 'Paste discharge medication list and the tool sorts each med into its stroke measure category: antithrombotic, anticoagulant, statin, or VTE prophylaxis — per TJC Appendix C v2025A.',
+    icon: 'ph-pill',
+    tag: 'STK',
+    tagClass: 'tag-stk',
+    category: 'stroke',
+    src: 'Tanni-stk-med-identifier-work.html',
+    color: '#6b4ab0',
+  },
+  {
+    id: 'med-compare',
+    name: 'Med Source Comparison',
+    desc: 'Paste two medication lists (AVS, DC Summary, DC Orders, RN Med Rec) and instantly flag exact matches, brand/generic equivalents, and discrepancies. Powered by RxNorm — 5,600+ brand/generic pairs plus 266 built-in pairs always available.',
+    icon: 'ph-arrows-left-right',
+    tag: 'MED-REC',
+    tagClass: 'tag-ref',
+    category: 'general',
+    src: 'med-compare-tool.html',
+  },
+  {
+    id: 'lkw',
+    name: 'LKW Resolution Tool',
+    desc: 'Enter chart findings to resolve Last Known Well date, time, and Y/N values using TJC v2026B priority rules. Includes a practice quiz and case walkthroughs.',
+    icon: 'ph-clock-countdown',
+    tag: 'STK-4',
+    tagClass: 'tag-stk',
+    category: 'stroke',
+    src: 'lkw-tool.html',
+  },
+  {
+    id: 'cmo',
+    name: 'CMO Abstraction Tool',
+    desc: 'Classify Comfort Measures Only denominator exclusions. Case classifier, guided workflow, quick reference, and practice quiz per TJC STK-6 / ASR-IP specs.',
+    icon: 'ph-heart-straight',
+    tag: 'STK-6',
+    tagClass: 'tag-stk',
+    category: 'stroke',
+    src: 'cmo-tool.html',
+  },
+  {
+    id: 'sep1',
+    name: 'SEP-1 Tool',
+    desc: 'Enter clinical events and the tool auto-detects SIRS, organ dysfunction, and bundle elements — then suggests Time Zero (SSPT) with step-by-step reasoning.',
+    icon: 'ph-chart-line-up',
+    tag: 'SEP-1',
+    tagClass: 'tag-sep',
+    category: 'sepsis',
+    src: 'sep1-tool.html',
+  },
+  {
+    id: 'hbips',
+    name: 'HBIPS Tool',
+    desc: 'Behavioral health inpatient measure abstraction tool. Covers HBIPS-2 through HBIPS-5 with guided workflows, exclusion classifiers, and quick reference.',
+    icon: 'ph-chat-circle-dots',
+    tag: 'HBIPS',
+    tagClass: 'tag-bh',
+    category: 'bh',
+    src: 'hbips-tool.html',
+  },
+  {
+    id: 'timekeeping',
+    name: 'Timekeeping Calculator',
+    desc: 'Enter your clock-in time, work hours, and break length — get your clock-out time instantly with a full breakdown. Opens in its own tab so your inputs stay put all day.',
+    icon: 'ph-clock',
+    tag: 'UTIL',
+    tagClass: 'tag-ref',
+    category: 'util',
+    src: 'timekeeping-calculator.html',
+  },
+  {
+    id: 'audit-countdown',
+    name: 'Quality Reporting Calendar',
+    desc: 'CMS and TJC reporting deadlines in one place — organized by submission event, not individual measures. Shows what to submit, what\'s included, and how much time remains. Tracks abstraction completion per submission. Includes confirmed 2026 dates, predicted 2027 dates, and a "What to Submit" checklist for every reporting event.',
+    icon: 'ph-calendar-check',
+    tag: 'DEADLINES',
+    tagClass: 'tag-ref',
+    category: 'stay',
+    src: 'audit-countdown.html',
+  },
+  {
+    id: 'focus',
+    name: 'Focus & Sound',
+    desc: 'Pomodoro-style focus timer tuned for abstraction work — 45/10, 25/5, or custom intervals. Quiet visual break screen with a pup photo carousel and rotating self-care, empowerment, and work humor reminders. Opens in its own tab so your timer and music keep running.',
+    icon: 'ph-timer',
+    tag: 'UTIL',
+    tagClass: 'tag-ref',
+    category: 'util',
+    src: 'focus-tool.html',
+  },
+  {
+    id: 'abstractly',
+    name: 'Abstractly',
+    desc: 'Wordle-style word game for core measure teams. Guess the 5-letter clinical term in 6 tries. A fun break between cases.',
+    icon: 'ph-game-controller',
+    tag: 'GAME',
+    tagClass: 'tag-game',
+    category: 'games',
+    src: 'abstractly.html',
+  },
+  {
+    id: 'wordsearch',
+    name: 'Word Search Builder',
+    desc: 'Build a word search two ways: fill in your word list and grid options for a print-ready PDF, or play an interactive puzzle on screen with preloaded packs or your own words.',
+    icon: 'ph-puzzle-piece',
+    tag: 'GAME',
+    tagClass: 'tag-game',
+    category: 'games',
+    src: 'wordsearch-tool.html',
+  },
+  {
+    id: 'audittrail',
+    name: 'Audit Trail',
+    desc: 'Match-3 puzzle game with a clinical-icon gem set. Clear rounds at your own pace — untimed, no fail state, just a quiet break between cases.',
+    icon: 'ph-heartbeat',
+    tag: 'GAME',
+    tagClass: 'tag-game',
+    category: 'games',
+    src: 'audittrail-tool.html',
+  },
+  {
+    id: 'fallout-dashboard',
+    name: 'Fallout Dashboard',
+    desc: 'Quality intelligence view across all measures — fallout rates by site and month, top reasons (Pareto), site benchmarking, and a patient journey view showing where in the care process fallouts cluster. Upload your own tracker or use the built-in sample data.',
+    icon: 'ph-gauge',
+    tag: 'ALL',
+    tagClass: 'tag-ref',
+    category: 'analytics',
+    src: 'fallout-dashboard.html',
+  },
+
+];
+
+// ── RENDER TOOL CARDS ──
+// Abstraction Tools sub-groups (nested under the "Abstraction Tools" header)
+const ABSTRACTION_SUBGROUPS = [
+  { cat: 'stroke',  label: 'Stroke Measure' },
+  { cat: 'sepsis',  label: 'Sepsis' },
+  { cat: 'bh',      label: 'Behavioral Health' },
+  { cat: 'general', label: 'General' },
+];
+const ABSTRACTION_CATS = ABSTRACTION_SUBGROUPS.map(s => s.cat);
+// Home-page section order for the "All tools" view (Stay Current is the static band above)
+const HOME_SECTIONS = [
+  { label: 'Analytics',         cats: ['analytics'] },
+  { label: 'Abstraction Tools', subgroups: ABSTRACTION_SUBGROUPS },
+  { label: 'Utilities',         cats: ['util'] },
+  { label: 'Games',             cats: ['games'] },
+];
+
+function makeCard(t) {
+  const newTab = NEW_TAB_TOOLS.includes(t.id);
+  return `
+    <div class="tool-card" onclick="openTool('${t.id}')" tabindex="0" role="button"
+      onkeydown="if(event.key==='Enter'||event.key===' ')openTool('${t.id}')"
+      aria-label="Open ${t.name}">
+      <div class="tool-card-top">
+        <div class="tool-card-icon"><i class="ph-duotone ${t.icon}"></i></div>
+        <span class="tool-tag ${t.tagClass}">${t.tag}</span>
+      </div>
+      <div class="tool-card-name">${t.name}</div>
+      <div class="tool-card-desc">${t.desc}</div>
+      <span class="tool-card-link">
+        ${newTab ? 'Opens in new tab' : 'Open tool'}
+        <i class="ph ${newTab ? 'ph-arrow-square-out' : 'ph-arrow-right'}"></i>
+      </span>
+    </div>`;
+}
+
+// grouped = true  -> main bucket (STK/SEP/BH) under "All the tools", then Utilities and Games as their own sections (used for "All tools")
+// grouped = false -> a single flat grid, no sections (used for a specific category filter or search results)
+function renderCards(tools, grouped) {
+  const groupedWrap  = document.getElementById('groupedSections');
+  const flatGrid      = document.getElementById('toolGrid');
+  const sectionLabel  = document.getElementById('sectionLabel');
+  const noResults      = document.getElementById('noResults');
+
+  if (!tools.length) {
+    groupedWrap.innerHTML = '';
+    flatGrid.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+
+  if (grouped) {
+    sectionLabel.classList.add('hidden');
+    flatGrid.style.display = 'none';
+    flatGrid.innerHTML = '';
+
+    groupedWrap.style.display = '';
+    groupedWrap.innerHTML = HOME_SECTIONS.map((sec, i) => {
+      const mt = i === 0 ? '' : ' style="margin-top:22px;"';
+      if (sec.subgroups) {
+        let inner = '';
+        let buf = [];
+        const flush = () => {
+          if (!buf.length) return;
+          inner += `<div class="tool-grid subgroup-compact">` +
+            buf.map(sg => `<div class="subgroup-col"><div class="subsection-label">${sg.label}</div>${sg.items.map(makeCard).join('')}</div>`).join('') +
+            `</div>`;
+          buf = [];
+        };
+        sec.subgroups.forEach(sgDef => {
+          const items = tools.filter(t => t.category === sgDef.cat);
+          if (!items.length) return;
+          if (items.length === 1) {
+            buf.push({ label: sgDef.label, items });
+          } else {
+            flush();
+            inner += `<div class="subsection-label">${sgDef.label}</div>
+        <div class="tool-grid">${items.map(makeCard).join('')}</div>`;
+          }
+        });
+        flush();
+        if (!inner) return '';
+        return `<div class="section-label"${mt}>${sec.label}</div>${inner}`;
+      }
+      const items = tools.filter(t => sec.cats.includes(t.category));
+      if (!items.length) return '';
+      return `<div class="section-label"${mt}>${sec.label}</div>
+        <div class="tool-grid">${items.map(makeCard).join('')}</div>`;
+    }).join('');
+  } else {
+    sectionLabel.classList.remove('hidden');
+    groupedWrap.innerHTML = '';
+    groupedWrap.style.display = 'none';
+    flatGrid.style.display = '';
+    flatGrid.innerHTML = tools.map(makeCard).join('');
+  }
+}
+
+// Initial render (grouped, since default view is "all")
+renderCards(TOOLS, true);
+
+// ── FILTER ──
+let currentFilter = 'all';
+
+function filterTools(cat) {
+  currentFilter = cat;
+  // Update nav active state
+  document.querySelectorAll('.nav-item[id^="nav-"]').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + cat);
+  if (navEl) navEl.classList.add('active');
+
+  let filtered;
+  if (cat === 'all') filtered = TOOLS;
+  else if (cat === 'abstraction') filtered = TOOLS.filter(t => ABSTRACTION_CATS.includes(t.category));
+  else filtered = TOOLS.filter(t => t.category === cat);
+
+  const label = {
+    all: 'All the tools',
+    stay: 'Stay Current',
+    analytics: 'Analytics',
+    abstraction: 'Abstraction Tools',
+    stroke: 'Stroke Measure tools',
+    sepsis: 'Sepsis tools',
+    bh: 'Behavioral Health tools',
+    general: 'General tools',
+    util: 'Utilities',
+    games: 'Games',
+  };
+  document.getElementById('sectionLabel').textContent = label[cat] || 'Tools';
+  document.getElementById('homeHero').style.display = cat === 'all' ? '' : 'none';
+  document.getElementById('stayCurrent').style.display = cat === 'all' ? '' : 'none';
+  document.getElementById('observanceBar').style.display = cat === 'all' && obsActive ? 'block' : 'none';
+  renderCards(filtered, cat === 'all');
+  // clear search
+  document.getElementById('searchInput').value = '';
+}
+
+// ── SEARCH ──
+function searchTools(q) {
+  const query = q.toLowerCase().trim();
+  if (!query) { filterTools(currentFilter); return; }
+  document.querySelectorAll('.nav-item[id^="nav-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById('sectionLabel').textContent = `Results for "${q}"`;
+  document.getElementById('homeHero').style.display = 'none';
+  document.getElementById('stayCurrent').style.display = 'none';
+  document.getElementById('observanceBar').style.display = 'none';
+  const filtered = TOOLS.filter(t =>
+    t.name.toLowerCase().includes(query) ||
+    t.desc.toLowerCase().includes(query) ||
+    t.tag.toLowerCase().includes(query) ||
+    t.category.toLowerCase().includes(query)
+  );
+  renderCards(filtered, false);
+}
+
+
+// Keyboard shortcut: / to focus search
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Escape') {
+    const panel = document.getElementById('toolPanel');
+    if (panel.classList.contains('open')) closePanel();
+  }
+});
+
+// ── TOOL PANEL ──
+function openTool(id) {
+  const tool = TOOLS.find(t => t.id === id);
+  if (!tool) return;
+
+  // These tools open in their own tab so state persists during hub navigation
+  if (NEW_TAB_TOOLS.includes(id)) {
+    window.open(tool.src, '_blank');
+    return;
+  }
+
+  const panel = document.getElementById('toolPanel');
+  document.getElementById('panelTitle').textContent = tool.name;
+  document.getElementById('panelTag').innerHTML =
+    `<span class="tool-tag ${tool.tagClass}">${tool.tag}</span>`;
+  document.getElementById('panelFrame').src = tool.src;
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Highlight nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navBtn = document.getElementById('navbtn-' + id);
+  if (navBtn) navBtn.classList.add('active');
+}
+
+function closePanel() {
+  const panel = document.getElementById('toolPanel');
+  panel.classList.remove('open');
+  document.body.style.overflow = '';
+  // Stop iframe from playing/loading
+  setTimeout(() => { document.getElementById('panelFrame').src = ''; }, 300);
+  // Restore nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-' + currentFilter)?.classList.add('active');
+}
+
+// ── SIDEBAR TOGGLE ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OBSERVANCE ENGINE
+// Each entry: { name, emoji, desc, cat, type, dates }
+// type: 'date' = single day (month,day)
+//       'range' = date range (m1,d1,m2,d2) — handles cross-month spans
+//       'week'  = nth week of month (month, week=1..5, day=0..6 anchor, span=days)
+//       'wday'  = nth weekday of month (month, n, weekday=0..6)
+//       'wday-last' = last weekday of month (month, weekday)
+// Priority: healthcare(1) > inclusion(2) > awareness(3) > worker(4) > general(5)
+// ══════════════════════════════════════════════════════════════════
+
+const OBSERVANCES = [
+
+  // ── HEALTHCARE & CLINICAL QUALITY ──────────────────────────────
+  { name:'Patient Safety Awareness Week', emoji:'🛡️',
+    desc:'Dedicated to advancing safety in healthcare settings across the country.',
+    cat:'healthcare', priority:1,
+    type:'week', month:3, week:2, anchor:1, span:7 }, // 2nd week of March (Mon–Sun)
+
+  { name:'National Nurses Week', emoji:'🩺',
+    desc:'Honoring the contributions of nurses everywhere. May 6–12.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:5, d1:6, m2:5, d2:12 },
+
+  { name:'National Hospital Week', emoji:'🏥',
+    desc:'Celebrating the work of hospitals and healthcare teams. Week of May 12.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:5, d1:12, m2:5, d2:18 },
+
+  { name:'International Nurses Day', emoji:'💙',
+    desc:'Marks the anniversary of Florence Nightingale\'s birth — May 12.',
+    cat:'healthcare', priority:1,
+    type:'date', month:5, day:12 },
+
+  { name:'Stroke Awareness Month', emoji:'🧠',
+    desc:'May is Stroke Awareness Month. Know the signs: FAST — Face, Arms, Speech, Time.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:5, d1:1, m2:5, d2:31 },
+
+  { name:'Mental Health Awareness Month', emoji:'🌱',
+    desc:'May is Mental Health Awareness Month. Check in on yourself and your colleagues.',
+    cat:'awareness', priority:2,
+    type:'range', m1:5, d1:1, m2:5, d2:31 },
+
+  { name:'Speech-Language-Hearing Month', emoji:'👂',
+    desc:'May is Better Hearing & Speech Month — raising awareness for communication disorders.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:5, d1:1, m2:5, d2:31 },
+
+  { name:'World Sepsis Day', emoji:'⚕️',
+    desc:'September 13 — raising global awareness of sepsis prevention and early recognition.',
+    cat:'healthcare', priority:1,
+    type:'date', month:9, day:13 },
+
+  { name:'Sepsis Awareness Month', emoji:'⚕️',
+    desc:'September is Sepsis Awareness Month. Early recognition saves lives.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:9, d1:1, m2:9, d2:30 },
+
+  { name:'World Patient Safety Day', emoji:'🛡️',
+    desc:'September 17 — WHO observance promoting global patient safety.',
+    cat:'healthcare', priority:1,
+    type:'date', month:9, day:17 },
+
+  { name:'Suicide Prevention Awareness Month', emoji:'🎗️',
+    desc:'September is Suicide Prevention Month. Resources matter. So does checking in.',
+    cat:'awareness', priority:2,
+    type:'range', m1:9, d1:1, m2:9, d2:30 },
+
+  { name:'World Suicide Prevention Day', emoji:'🎗️',
+    desc:'September 10 — a day to promote action to prevent suicide worldwide.',
+    cat:'awareness', priority:2,
+    type:'date', month:9, day:10 },
+
+  { name:'Healthcare Quality Week', emoji:'📊',
+    desc:'3rd week of October — recognizing professionals who drive quality and patient safety.',
+    cat:'healthcare', priority:1,
+    type:'week', month:10, week:3, anchor:1, span:7 },
+
+  { name:'World Mental Health Day', emoji:'🌍',
+    desc:'October 10 — global awareness of mental health and wellbeing.',
+    cat:'awareness', priority:2,
+    type:'date', month:10, day:10 },
+
+  { name:'Domestic Violence Awareness Month', emoji:'💜',
+    desc:'October — honoring survivors and working to end domestic violence.',
+    cat:'awareness', priority:2,
+    type:'range', m1:10, d1:1, m2:10, d2:31 },
+
+  { name:'World Stroke Day', emoji:'🧠',
+    desc:'October 29 — raising awareness of stroke prevention and recovery worldwide.',
+    cat:'healthcare', priority:1,
+    type:'date', month:10, day:29 },
+
+  { name:'National Physical Therapy Month', emoji:'🏃',
+    desc:'October is National Physical Therapy Month.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:10, d1:1, m2:10, d2:31 },
+
+  { name:'National Pharmacist Month', emoji:'💊',
+    desc:'October recognizes the essential role pharmacists play in patient care.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:10, d1:1, m2:10, d2:31 },
+
+  { name:'National Physician Assistant Week', emoji:'🩻',
+    desc:'October 6–12 — recognizing the vital contributions of PAs in healthcare.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:10, d1:6, m2:10, d2:12 },
+
+  { name:'National Allied Health Professions Week', emoji:'🏨',
+    desc:'3rd week of November — celebrating allied health professionals.',
+    cat:'healthcare', priority:1,
+    type:'week', month:11, week:3, anchor:1, span:7 },
+
+  { name:'Brain Injury Awareness Month', emoji:'🧠',
+    desc:'March is Brain Injury Awareness Month.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:3, d1:1, m2:3, d2:31 },
+
+  { name:'National Social Work Month', emoji:'🤝',
+    desc:'March recognizes social workers and the essential services they provide.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:3, d1:1, m2:3, d2:31 },
+
+  { name:'Occupational Therapy Month', emoji:'🖐️',
+    desc:'April is Occupational Therapy Month.',
+    cat:'healthcare', priority:1,
+    type:'range', m1:4, d1:1, m2:4, d2:30 },
+
+  { name:'Sexual Assault Awareness Month', emoji:'🔵',
+    desc:'April — raising awareness and supporting survivors of sexual assault.',
+    cat:'awareness', priority:2,
+    type:'range', m1:4, d1:1, m2:4, d2:30 },
+
+  { name:'National Stress Awareness Month', emoji:'😮‍💨',
+    desc:'April — a reminder to check in on your stress levels and wellbeing.',
+    cat:'awareness', priority:2,
+    type:'range', m1:4, d1:1, m2:4, d2:30 },
+
+  { name:'World Health Worker Week', emoji:'🌐',
+    desc:'First week of April — honoring health workers worldwide.',
+    cat:'healthcare', priority:1,
+    type:'week', month:4, week:1, anchor:1, span:7 },
+
+  // ── HERITAGE & INCLUSION ───────────────────────────────────────
+  { name:'Black History Month', emoji:'✊🏾',
+    desc:'February — celebrating the history, achievements, and culture of Black Americans.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:2, d1:1, m2:2, d2:28 },
+
+  { name:'Eating Disorders Awareness Week', emoji:'🎀',
+    desc:'Last week of February — raising awareness and reducing stigma around eating disorders.',
+    cat:'awareness', priority:2,
+    type:'week', month:2, week:5, anchor:1, span:7 },
+
+  { name:'Women\'s History Month', emoji:'♀️',
+    desc:'March — honoring the contributions of women throughout history.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:3, d1:1, m2:3, d2:31 },
+
+  { name:'International Women\'s Day', emoji:'♀️',
+    desc:'March 8 — celebrating women\'s achievements and pushing for gender equity.',
+    cat:'inclusion', priority:2,
+    type:'date', month:3, day:8 },
+
+  { name:'Transgender Day of Visibility', emoji:'🏳️‍⚧️',
+    desc:'March 31 — celebrating transgender people and raising awareness of discrimination.',
+    cat:'inclusion', priority:2,
+    type:'date', month:3, day:31 },
+
+  { name:'Arab American Heritage Month', emoji:'🌙',
+    desc:'April — celebrating the heritage and contributions of Arab Americans.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:4, d1:1, m2:4, d2:30 },
+
+  { name:'Asian American & Pacific Islander Heritage Month', emoji:'🌸',
+    desc:'May — celebrating the history and contributions of AAPI communities.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:5, d1:1, m2:5, d2:31 },
+
+  { name:'Jewish American Heritage Month', emoji:'✡️',
+    desc:'May — celebrating the contributions of Jewish Americans to US history.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:5, d1:1, m2:5, d2:31 },
+
+  { name:'Pride Month', emoji:'🏳️‍🌈',
+    desc:'June — celebrating LGBTQQIP2SAA identities, history, and the ongoing fight for equality for Lesbian, Gay, Bisexual, Transgender, Queer, Questioning, Intersex, Pansexual, Two-Spirit, Asexual, and Ally communities.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:6, d1:1, m2:6, d2:30 },
+
+  { name:'Juneteenth', emoji:'✊🏾',
+    desc:'June 19 — commemorating the emancipation of enslaved people in the United States.',
+    cat:'inclusion', priority:1,
+    type:'date', month:6, day:19 },
+
+  { name:'Disability Pride Month', emoji:'♿',
+    desc:'July — celebrating disability identity and the disability rights movement.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:7, d1:1, m2:7, d2:31 },
+
+  { name:'South Asian Heritage Month', emoji:'🪔',
+    desc:'July — celebrating the heritage and contributions of South Asian communities.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:7, d1:1, m2:7, d2:31 },
+
+  { name:'National Minority Mental Health Month', emoji:'🧠',
+    desc:'July — raising awareness of mental health disparities in underrepresented communities.',
+    cat:'awareness', priority:2,
+    type:'range', m1:7, d1:1, m2:7, d2:31 },
+
+  { name:'PTSD Awareness Month', emoji:'🎗️',
+    desc:'June is PTSD Awareness Month — supporting those affected by trauma.',
+    cat:'awareness', priority:2,
+    type:'range', m1:6, d1:1, m2:6, d2:30 },
+
+  { name:'Hispanic Heritage Month', emoji:'🌺',
+    desc:'Sep 15 – Oct 15 — celebrating the history and culture of Hispanic and Latino communities.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:9, d1:15, m2:10, d2:15 },
+
+  { name:'Filipino American History Month', emoji:'🌺',
+    desc:'October — celebrating Filipino American history and contributions.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:10, d1:1, m2:10, d2:31 },
+
+  { name:'National Coming Out Day', emoji:'🏳️‍🌈',
+    desc:'October 11 — supporting LGBTQQIP2SAA individuals in living openly and authentically as their full selves.',
+    cat:'inclusion', priority:2,
+    type:'date', month:10, day:11 },
+
+  { name:'Indigenous Peoples\' Day', emoji:'🪶',
+    desc:'2nd Monday of October — honoring the history and cultures of Native peoples.',
+    cat:'inclusion', priority:2,
+    type:'wday', month:10, n:2, weekday:1 },
+
+  { name:'Native American Heritage Month', emoji:'🪶',
+    desc:'November — celebrating the cultures, traditions, and history of Native Americans.',
+    cat:'inclusion', priority:2,
+    type:'range', m1:11, d1:1, m2:11, d2:30 },
+
+  { name:'International Day of Persons with Disabilities', emoji:'♿',
+    desc:'December 3 — promoting rights and wellbeing of people with disabilities worldwide.',
+    cat:'inclusion', priority:2,
+    type:'date', month:12, day:3 },
+
+  // ── WORKER & PROFESSIONAL RECOGNITION ─────────────────────────
+  { name:'Administrative Professionals Week', emoji:'🗂️',
+    desc:'Last full week of April — celebrating administrative professionals everywhere.',
+    cat:'worker', priority:3,
+    type:'week', month:4, week:5, anchor:1, span:7 },
+
+  // ── GENERAL OBSERVANCES ────────────────────────────────────────
+  { name:'Martin Luther King Jr. Day', emoji:'✊🏾',
+    desc:'3rd Monday of January — honoring Dr. King\'s legacy and the Civil Rights Movement.',
+    cat:'general', priority:3,
+    type:'wday', month:1, n:3, weekday:1 },
+
+  { name:'Earth Day', emoji:'🌎',
+    desc:'April 22 — a reminder to protect the planet we all share.',
+    cat:'general', priority:4,
+    type:'date', month:4, day:22 },
+
+  { name:'Memorial Day', emoji:'🇺🇸',
+    desc:'Last Monday of May — honoring those who died in service to the United States.',
+    cat:'general', priority:3,
+    type:'wday-last', month:5, weekday:1 },
+
+  { name:'Labor Day', emoji:'🛠️',
+    desc:'1st Monday of September — celebrating the American labor movement.',
+    cat:'worker', priority:3,
+    type:'wday', month:9, n:1, weekday:1 },
+
+  { name:'International Day of Peace', emoji:'🕊️',
+    desc:'September 21 — dedicated to world peace and the absence of violence.',
+    cat:'general', priority:4,
+    type:'date', month:9, day:21 },
+
+  { name:'Veterans Day', emoji:'🎖️',
+    desc:'November 11 — honoring all who have served in the US Armed Forces.',
+    cat:'general', priority:3,
+    type:'date', month:11, day:11 },
+
+  { name:'World Kindness Day', emoji:'💛',
+    desc:'November 13 — a good day to do something kind for a colleague.',
+    cat:'general', priority:4,
+    type:'date', month:11, day:13 },
+
+  { name:'Independence Day', emoji:'🎆',
+    desc:'July 4 — celebrating American independence.',
+    cat:'general', priority:3,
+    type:'date', month:7, day:4 },
+];
+
+// ── DATE MATCHING UTILITIES ──────────────────────────────────────
+function getNthWeekday(year, month, n, weekday) {
+  // n=1 → first, n=2 → second, etc. weekday: 0=Sun,1=Mon,...,6=Sat
+  let count = 0;
+  for (let d = 1; d <= 31; d++) {
+    const dt = new Date(year, month - 1, d);
+    if (dt.getMonth() !== month - 1) break;
+    if (dt.getDay() === weekday) { count++; if (count === n) return d; }
+  }
+  return null;
+}
+
+function getLastWeekday(year, month, weekday) {
+  for (let d = 31; d >= 1; d--) {
+    const dt = new Date(year, month - 1, d);
+    if (dt.getMonth() !== month - 1) continue;
+    if (dt.getDay() === weekday) return d;
+  }
+  return null;
+}
+
+function getNthWeekStart(year, month, week) {
+  // Returns day-of-month of the Monday starting the Nth week of the month
+  // "week" = 1..5. Week 1 = first Mon on or after the 1st.
+  let count = 0;
+  for (let d = 1; d <= 31; d++) {
+    const dt = new Date(year, month - 1, d);
+    if (dt.getMonth() !== month - 1) break;
+    if (dt.getDay() === 1) { // Monday
+      count++;
+      if (count === week) return d;
+    }
+  }
+  return null;
+}
+
+function isObservanceActive(obs, today) {
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  const d = today.getDate();
+
+  if (obs.type === 'date') {
+    return m === obs.month && d === obs.day;
+  }
+
+  if (obs.type === 'range') {
+    const todayN = y * 10000 + m * 100 + d;
+    const startN = y * 10000 + obs.m1 * 100 + obs.d1;
+    const endN   = y * 10000 + obs.m2 * 100 + obs.d2;
+    return todayN >= startN && todayN <= endN;
+  }
+
+  if (obs.type === 'week') {
+    // obs.week = 1..5 (nth week), obs.anchor = 1 (Monday-anchored)
+    const weekStart = getNthWeekStart(y, obs.month, obs.week);
+    if (!weekStart) return false;
+    const start = new Date(y, obs.month - 1, weekStart);
+    const end   = new Date(y, obs.month - 1, weekStart + (obs.span || 7) - 1);
+    return today >= start && today <= end;
+  }
+
+  if (obs.type === 'wday') {
+    const day = getNthWeekday(y, obs.month, obs.n, obs.weekday);
+    return m === obs.month && d === day;
+  }
+
+  if (obs.type === 'wday-last') {
+    const day = getLastWeekday(y, obs.month, obs.weekday);
+    return m === obs.month && d === day;
+  }
+
+  return false;
+}
+
+// ── BUILD & RENDER ───────────────────────────────────────────────
+let obsActive = false;
+let obsItems = [];
+let obsIdx = 0;
+
+function obsNav(dir) {
+  if (!obsItems.length) return;
+  document.querySelector('#obsSlides .obs-slide.active')?.classList.remove('active');
+  obsIdx = (obsIdx + dir + obsItems.length) % obsItems.length;
+  document.querySelectorAll('#obsSlides .obs-slide')[obsIdx]?.classList.add('active');
+  document.getElementById('obsCounter').textContent = `${obsIdx+1} / ${obsItems.length}`;
+}
+
+function initObservances() {
+  const today = new Date();
+  obsItems = OBSERVANCES
+    .filter(o => isObservanceActive(o, today))
+    .sort((a, b) => a.priority - b.priority);
+
+  if (!obsItems.length) return;
+
+  obsActive = true;
+  const bar = document.getElementById('observanceBar');
+  const slides = document.getElementById('obsSlides');
+  bar.style.display = 'block';
+
+  slides.innerHTML = obsItems.map((o, i) => `
+    <div class="obs-slide ${i===0?'active':''}">
+      <div class="obs-emoji">${o.emoji}</div>
+      <div class="obs-body">
+        <div class="obs-name">${o.name}</div>
+        <div class="obs-desc">${o.desc}</div>
+        <span class="obs-pill ${o.cat}">${o.cat.replace('inclusion','Heritage & Inclusion').replace('healthcare','Healthcare').replace('awareness','Awareness').replace('worker','Staff Recognition').replace('general','Observance')}</span>
+      </div>
+    </div>`).join('');
+
+  const counter = document.getElementById('obsCounter');
+  const nav = document.getElementById('obsNav');
+  if (obsItems.length === 1) {
+    counter.style.display = 'none';
+    document.getElementById('obsPrev').style.display = 'none';
+    document.getElementById('obsNext').style.display = 'none';
+  } else {
+    counter.textContent = `1 / ${obsItems.length}`;
+  }
+}
+
+initObservances();
+</script>
+</body>
+</html>

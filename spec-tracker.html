@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Spec Tracker — Tanni's Desk Tools. TJC / CMS core measure release monitor. Track spec versions, compare releases, and jump to source manuals across every measure set.">
+<title>Spec Tracker — Tanni's Desk Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6b4ab0; --purple2:#8b6fcc; --purple3:#a98fdc;
+  --purple4:#c4adec; --purple-pale:#f3f0ff; --purple-mid:#ddd4f8; --purple-deep:#3a2070;
+  --canvas:#f5f3ff; --card-bg:#ffffff; --card-border:#e8e3f8;
+  --card-hover-border:#a98fdc; --ink:#160e2c; --ink-mid:#3d2f6b; --ink-soft:#7a6fa0;
+  --border:#ddd4f8;
+  --tag-stk-bg:#ede8fb; --tag-stk:#6b4ab0;
+  --tag-sep-bg:#e8f3fb; --tag-sep:#1d6fa4;
+  --tag-bh-bg:#fdf0e8;  --tag-bh:#a05a1a;
+  --tag-ref-bg:#e8fbf0; --tag-ref:#1a7a4a;
+
+  --green:#166534; --green-bg:#f0fdf4; --green-border:#86efac;
+  --amber:#8a5200; --amber-bg:#fff8ec; --amber-border:#e8c060;
+  --red:#9b1c1c;   --red-bg:#fef2f2;   --red-border:#fca5a5;
+  --blue:#1d6fa4;  --blue-bg:#eef6fc;  --blue-border:#a9d3ee;
+
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+  --radius:10px;
+}
+
+html,body{-webkit-font-smoothing:antialiased;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;}
+a{color:var(--purple);}
+
+/* ── HEADER ── */
+.hdr{
+  position:sticky;top:0;z-index:60;
+  background:var(--purple);
+  display:flex;align-items:center;gap:14px;
+  padding:14px 22px;
+  box-shadow:0 2px 12px rgba(58,32,112,.22);
+}
+.hbadge{
+  font-family:var(--mono);font-size:13px;font-weight:500;
+  color:#fff;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.28);
+  padding:5px 11px;border-radius:7px;letter-spacing:.06em;flex-shrink:0;
+}
+.htitle{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px;line-height:1.2;}
+.hsub{font-size:11.5px;color:rgba(255,255,255,.72);font-family:var(--mono);letter-spacing:.03em;margin-top:1px;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.stamp{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  padding:5px 10px;border-radius:6px;white-space:nowrap;
+}
+.stamp i{font-size:14px;}
+
+/* ── TAB BAR ── */
+.tabbar{
+  position:sticky;top:56px;z-index:55;
+  display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+  background:var(--card-bg);border-bottom:1px solid var(--border);
+  padding:0 12px;
+}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab{
+  display:flex;align-items:center;gap:7px;
+  padding:12px 16px;font-size:13.5px;font-weight:600;
+  color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;
+  border:none;background:none;border-bottom:3px solid transparent;
+  transition:color .15s;
+}
+.tab i{font-size:16px;}
+.tab:hover{color:var(--ink-mid);}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+
+/* ── MEASURE BAR ── */
+.measure-bar{
+  background:var(--purple-pale);border-bottom:1px solid var(--border);
+  padding:12px 22px;
+}
+.mb-groups{display:flex;flex-wrap:wrap;gap:18px;align-items:center;}
+.mb-group{display:flex;align-items:center;gap:8px;}
+.mb-group-label{
+  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+.mchip{
+  font-family:var(--mono);font-size:12px;font-weight:500;
+  padding:5px 11px;border-radius:20px;cursor:pointer;
+  border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink-mid);
+  transition:border-color .15s,background .15s,color .15s;white-space:nowrap;
+}
+.mchip:hover{border-color:var(--purple3);}
+.mchip.active{border-color:var(--purple);background:var(--purple);color:#fff;}
+.mchip.pending{opacity:.62;}
+.mchip.active.pending{opacity:1;}
+
+/* ── CONTENT ── */
+.content{padding:22px 22px 60px;max-width:1000px;margin:0 auto;}
+.fadeUp{animation:fadeUp .22s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── CALLOUT ── */
+.cx{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-radius:9px;font-size:13px;line-height:1.55;margin-bottom:18px;}
+.cx i{font-size:18px;flex-shrink:0;margin-top:1px;}
+.cx.info{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.cx.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.cx.tip{background:var(--purple-pale);color:var(--purple-deep);border:1px solid var(--purple-mid);}
+.cx strong{font-weight:700;}
+
+/* ── SECTION LABEL ── */
+.section-label{
+  font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);
+  margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);
+}
+
+/* ── OVERVIEW GRID ── */
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:8px;}
+.ov-card{
+  background:var(--card-bg);border:2px solid var(--card-border);border-radius:var(--radius);
+  padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:10px;
+  transition:border-color .2s,box-shadow .2s,transform .1s;
+}
+.ov-card:hover{border-color:var(--card-hover-border);box-shadow:0 4px 20px rgba(107,74,176,.12);transform:translateY(-1px);}
+.ov-card.pending{cursor:pointer;}
+.ov-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.ov-icon{width:40px;height:40px;border-radius:9px;background:var(--purple-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ov-icon i{font-size:23px;color:var(--purple);}
+.ov-tag{font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:4px;}
+.tag-stk{background:var(--tag-stk-bg);color:var(--tag-stk);}
+.tag-sep{background:var(--tag-sep-bg);color:var(--tag-sep);}
+.tag-bh{background:var(--tag-bh-bg);color:var(--tag-bh);}
+.tag-ref{background:var(--tag-ref-bg);color:var(--tag-ref);}
+.ov-name{font-size:15.5px;font-weight:700;color:var(--ink);}
+.ov-full{font-size:11.5px;color:var(--ink-soft);line-height:1.45;min-height:32px;}
+.ov-meta{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);}
+.ov-prog{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);}
+.ov-status{margin-left:auto;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;}
+.ov-status.done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.ov-status.todo{background:#f1eefb;color:var(--ink-soft);border:1px solid var(--border);}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* ── VERSION GRID ── */
+.version-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.version-card{
+  background:var(--card-bg);border:2px solid var(--card-border);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;
+}
+.version-card:hover{border-color:var(--card-hover-border);box-shadow:0 4px 16px rgba(107,74,176,.1);}
+.version-card.selected{border-color:var(--purple);background:var(--purple-pale);}
+.version-card.unavailable{opacity:.6;cursor:default;}
+.vc-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;}
+.vc-version{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.3px;margin-bottom:2px;}
+.vc-dates{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-bottom:10px;}
+.vc-status{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:5px;}
+.vc-status.current{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.vc-status.upcoming{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.vc-status.active{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.vc-status.pending{background:#f1eefb;color:var(--ink-soft);border:1px solid var(--border);}
+
+/* ── DETAIL PANEL ── */
+.panel{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--purple-pale);}
+.panel-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:9px;}
+.vpill{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:5px;border:1px solid var(--purple-mid);color:var(--purple);background:var(--card-bg);}
+.panel-links{display:flex;gap:7px;flex-wrap:wrap;}
+.speclink{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;
+  color:var(--purple);text-decoration:none;padding:5px 10px;border-radius:6px;
+  border:1px solid var(--purple-mid);background:var(--card-bg);transition:background .13s,border-color .13s;white-space:nowrap;
+}
+.speclink:hover{background:var(--purple-pale);border-color:var(--purple3);text-decoration:none;}
+.speclink i{font-size:13px;}
+.panel-body{padding:15px 16px;}
+
+/* ── CHANGES LIST ── */
+.changes{list-style:none;}
+.changes li{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.55;align-items:flex-start;}
+.changes li:last-child{border-bottom:none;}
+.ctag{font-family:var(--mono);font-size:9.5px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:2px;letter-spacing:.03em;}
+.ct-ipp{background:var(--tag-stk-bg);color:var(--tag-stk);}
+.ct-algo{background:#f0eafc;color:var(--purple2);}
+.ct-de{background:var(--green-bg);color:var(--green);}
+.ct-clar{background:var(--amber-bg);color:var(--amber);}
+.ct-new{background:var(--blue-bg);color:var(--blue);}
+
+/* ── DIFF TABLE ── */
+.diff-wrap{margin-top:16px;}
+table.diff{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.diff th{
+  text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.05em;
+  color:var(--ink-soft);padding:8px 10px;border-bottom:1.5px solid var(--border);font-weight:500;
+}
+table.diff td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;}
+table.diff tr:last-child td{border-bottom:none;}
+table.diff tr:hover td{background:var(--purple-pale);}
+.de-name{font-family:var(--mono);font-size:12px;color:var(--ink);}
+.v-same{color:var(--ink-soft);}
+.v-changed{color:var(--amber);font-weight:500;}
+.v-added{color:var(--green);font-weight:500;}
+.v-removed,.v-pending{color:var(--red);font-weight:500;}
+
+/* ── COMPARE ROW ── */
+.cmp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.cmp-row label{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);}
+.cmp-row select{
+  font-family:var(--mono);font-size:12.5px;color:var(--ink);
+  background:var(--card-bg);border:1.5px solid var(--border);border-radius:7px;
+  padding:6px 10px;cursor:pointer;
+}
+.cmp-row select:focus{outline:none;border-color:var(--purple3);}
+
+/* ── EMPTY STATE ── */
+.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:46px 22px;text-align:center;color:var(--ink-soft);
+  background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);
+}
+.empty i{font-size:34px;color:var(--purple3);}
+.empty .et{font-size:15px;font-weight:700;color:var(--ink-mid);}
+.empty .ed{font-size:13px;max-width:440px;}
+.empty ul{text-align:left;font-size:12.5px;list-style:none;margin-top:4px;display:flex;flex-direction:column;gap:6px;}
+.empty ul li{display:flex;gap:8px;align-items:flex-start;}
+.empty ul li i{font-size:15px;margin-top:2px;color:var(--purple3);}
+
+/* ── SOURCES ── */
+.src-panel{margin-bottom:14px;}
+.src-links{display:flex;flex-wrap:wrap;gap:7px;padding:12px 16px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:560px){
+  .content{padding:18px 16px 50px;}
+  .measure-bar{padding:12px 16px;}
+  .hsub{display:none;}
+  .stamp{display:none;}
+  .mb-groups{gap:12px;}
+  .version-grid{grid-template-columns:1fr 1fr;}
+}
+:focus-visible{outline:2px solid var(--purple3);outline-offset:2px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hbadge">SPEC</div>
+  <div>
+    <div class="htitle">Spec Tracker</div>
+    <div class="hsub">TJC / CMS release monitor · all measures</div>
+  </div>
+  <div class="hdr-right">
+    <div class="stamp"><i class="ph ph-calendar-check"></i> Reviewed 2026-07-10</div>
+  </div>
+</header>
+
+<!-- ══ TABS ══ -->
+<div class="tabbar" id="tabbar">
+  <button class="tab active" data-tab="overview" onclick="switchTab('overview',this)"><i class="ph ph-squares-four"></i> Overview</button>
+  <button class="tab" data-tab="releases" onclick="switchTab('releases',this)"><i class="ph ph-stack"></i> Releases</button>
+  <button class="tab" data-tab="compare" onclick="switchTab('compare',this)"><i class="ph ph-git-diff"></i> Compare</button>
+  <button class="tab" data-tab="sources" onclick="switchTab('sources',this)"><i class="ph ph-link-simple"></i> Sources</button>
+</div>
+
+<!-- ══ MEASURE BAR (hidden on Overview) ══ -->
+<div class="measure-bar" id="measureBar" style="display:none;">
+  <div class="mb-groups" id="mbGroups"></div>
+</div>
+
+<!-- ══ CONTENT ══ -->
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="cx tip">
+      <i class="ph ph-info"></i>
+      <span><strong>Preview build.</strong> HBIPS is fully populated so you can see the full flow. The other measures show where they'll live — pick any card to see the drill-down layout. This Overview is the "all measures at a glance" view; the Releases tab is the "one measure at a time" view. Seeing both should make the earlier question easy to answer.</span>
+    </div>
+    <div class="section-label">Measure sets — spec status</div>
+    <div class="ov-grid" id="ovGrid"></div>
+  </div>
+
+  <!-- RELEASES -->
+  <div id="tab-releases" style="display:none;">
+    <div id="releasesBody"></div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="tab-compare" style="display:none;">
+    <div id="compareBody"></div>
+  </div>
+
+  <!-- SOURCES -->
+  <div id="tab-sources" style="display:none;">
+    <div id="sourcesBody"></div>
+  </div>
+
+</div>
+
+<script>
+/* ════════ MEASURE REGISTRY ════════
+   Only HBIPS is populated in this preview. Each other measure carries safe
+   metadata (name, program, icon) and populated:false, which renders an honest
+   placeholder instead of invented spec data. */
+const MEASURES = {
+  stk:   { label:"STK",    full:"Ischemic / hemorrhagic stroke (inpatient)", program:"TJC ORYX", tag:"tag-stk", icon:"ph-brain",             populated:true  },
+  cstk:  { label:"CSTK",   full:"Comprehensive stroke",                       program:"TJC ORYX", tag:"tag-stk", icon:"ph-brain",             populated:false },
+  asrip: { label:"ASR-IP", full:"Acute Stroke Ready — inpatient (ASR-IP-1/2/3)", program:"TJC ORYX", tag:"tag-stk", icon:"ph-brain",       populated:false },
+  sep1:  { label:"SEP-1",  full:"Severe sepsis & septic shock",              program:"CMS IQR",  tag:"tag-sep", icon:"ph-drop",              populated:false },
+  hbips: { label:"HBIPS",  full:"Inpatient psychiatric — restraint & seclusion", program:"TJC ORYX / CMS IPFQR", tag:"tag-bh", icon:"ph-chat-circle-dots", populated:true },
+  pc06:  { label:"PC-06",  full:"Unexpected complications, term newborns",   program:"TJC ORYX", tag:"tag-ref", icon:"ph-baby",              populated:false },
+  oped:  { label:"OP ED",  full:"ED throughput (outpatient)",                program:"CMS OQR",  tag:"tag-ref", icon:"ph-hospital",          populated:false },
+  opstk: { label:"OP STK", full:"Outpatient stroke",                         program:"CMS OQR",  tag:"tag-ref", icon:"ph-hospital",          populated:false },
+  op29:  { label:"OP-29",  full:"Colonoscopy follow-up interval",            program:"CMS OQR",  tag:"tag-ref", icon:"ph-hospital",          populated:false },
+  hcahps:{ label:"HCAHPS", full:"Patient experience survey",                 program:"CMS survey", tag:"tag-ref", icon:"ph-star",           populated:false },
+};
+
+/* measure groups for the selector bar */
+const MEASURE_GROUPS = [
+  { label:"Stroke",     ids:["stk","cstk","asrip"] },
+  { label:"Sepsis",     ids:["sep1"] },
+  { label:"Behavioral", ids:["hbips"] },
+  { label:"Perinatal",  ids:["pc06"] },
+  { label:"Outpatient", ids:["oped","opstk","op29"] },
+  { label:"Survey",     ids:["hcahps"] },
+];
+
+/* ════════ HBIPS DATA (ported from your uploaded tracker) ════════ */
+MEASURES.hbips.currentVersion = "2026B";
+MEASURES.hbips.order = ["2025A","2026A","2026A1","2026B","2027A"];
+MEASURES.hbips.releases = {
+  "2025A":{ label:"v2025A", period:"01-01-25 → 06-30-25", statusLabel:"Past / historical", color:"active",
+    links:{
+      "HBIPS IPP":"https://manual.jointcommission.org/releases/TJC2025A/HospitalBasedInpatientPsychiatricServices.html",
+      "HBIPS-2":"https://manual.jointcommission.org/releases/TJC2025A/MIF0117.html",
+      "HBIPS-3":"https://manual.jointcommission.org/releases/TJC2025A/MIF0118.html",
+      "Data Dictionary":"https://manual.jointcommission.org/releases/TJC2025A/DataDictionaryIntroductionTJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2025A/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"ipp",label:"IPP",text:"Initial Patient Population algorithm maintained from v2024B: Event Date exists + Psychiatric Care Setting = Y + Patient Age at Time of Event ≥ 1 year."},
+      {tag:"algo",label:"ALGO",text:"HBIPS-2 (Physical Restraint) and HBIPS-3 (Seclusion) measure algorithms carried forward with no structural changes from 2024B."},
+      {tag:"de",label:"DATA ELEM",text:"Four age strata preserved: Stratum 1 (1–12 yrs), Stratum 2 (13–17 yrs), Stratum 3 (18–64 yrs), Stratum 4 (≥65 yrs). No stratum boundary changes."},
+      {tag:"clar",label:"CLARIF",text:"Abstraction guidance clarifications included in release notes for Event Date capture when not initially recorded electronically."}
+    ],
+    dataElements:[
+      {name:"Event Date",change:"same",note:"No change"},
+      {name:"Psychiatric Care Setting",change:"same",note:"No change"},
+      {name:"Event Type",change:"same",note:"Type 1 = Physical Restraint, Type 2 = Seclusion"},
+      {name:"Minutes of Physical Restraint",change:"same",note:"No change"},
+      {name:"Minutes of Seclusion",change:"same",note:"No change"},
+      {name:"Patient Age at Time of Event",change:"same",note:"No change — calculated as Event Date − Birthdate"}
+    ]
+  },
+  "2026A":{ label:"v2026A", period:"01-01-26 → 06-30-26", statusLabel:"Past (1H 2026)", color:"active",
+    links:{
+      "HBIPS IPP":"https://manual.jointcommission.org/releases/TJC2026A/HospitalBasedInpatientPsychiatricServices.html",
+      "HBIPS-2":"https://manual.jointcommission.org/releases/TJC2026A/MIF0117.html",
+      "HBIPS-3":"https://manual.jointcommission.org/releases/TJC2026A/MIF0118.html",
+      "Data Dictionary":"https://manual.jointcommission.org/releases/TJC2026A/DataDictionaryIntroductionTJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026A/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"ipp",label:"IPP",text:"IPP algorithm updated in 2026A. Patients with event occurring while in Psychiatric Care Setting (= Y) are now processed with an explicit reject path when Patient Age at Time of Event equals zero — set to reject before stratum evaluation."},
+      {tag:"algo",label:"ALGO",text:"HBIPS-2 and HBIPS-3 processing flows updated. UTD (Unable to Determine) handling clarified: UTD values yield Measure Category Y (in population, not numerator) rather than reject (X)."},
+      {tag:"de",label:"DATA ELEM",text:"No new data elements added. Existing HBIPS-specific data elements confirmed for this version with updated abstraction notes."},
+      {tag:"clar",label:"CLARIF",text:"Clarification: Event population cases not initially captured electronically must be added during manual abstraction. Notes for each stratum measure explicitly restate that no sampling applies to HBIPS event measures."},
+      {tag:"clar",label:"CLARIF",text:"Psychiatric Inpatient Days Medicare Only / Non-Medicare Only for denominator aggregation are derived from census data (Psychiatric Inpatient Days − Total Leave Days), not from IPP algorithm cases — reinforced in 2026A data entry guide."}
+    ],
+    dataElements:[
+      {name:"Event Date",change:"same",note:"No change"},
+      {name:"Psychiatric Care Setting",change:"same",note:"No change"},
+      {name:"Event Type",change:"same",note:"No change (1 = Restraint, 2 = Seclusion)"},
+      {name:"Minutes of Physical Restraint",change:"same",note:"No change"},
+      {name:"Minutes of Seclusion",change:"same",note:"No change"},
+      {name:"Patient Age at Time of Event",change:"changed",note:"Age = 0 years now triggers explicit reject (IPP Reject Case Flag = Yes) before stratum checks"}
+    ]
+  },
+  "2026A1":{ label:"v2026A1", period:"01-01-26 → 06-30-26", statusLabel:"Mid-cycle update", color:"active",
+    links:{
+      "Appendix D":"https://manual.jointcommission.org/releases/TJC2026A1/AppendixDTJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026A1/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"clar",label:"CLARIF",text:"2026A1 is a mid-cycle correction release covering the same 1Q26–2Q26 discharge period as 2026A. HBIPS measure logic is unchanged; corrections apply to other measure sets (appendix glossary and CCN/CMS certification number guidance updated)."},
+      {tag:"clar",label:"CLARIF",text:"HBIPS definition in Appendix D reconfirmed: targeted toward improving quality and performance in inpatient psychiatric settings through 2 process measures. No structural changes to abstraction logic."}
+    ],
+    dataElements:[
+      {name:"All HBIPS data elements",change:"same",note:"No change from v2026A"}
+    ]
+  },
+  "2026B":{ label:"v2026B", period:"07-01-26 → 12-31-26", statusLabel:"Current (2H 2026)", color:"current",
+    links:{
+      "HBIPS-2":"https://manual.jointcommission.org/releases/TJC2026B/MIF0117.html",
+      "HBIPS-3":"https://manual.jointcommission.org/releases/TJC2026B/MIF0118.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026B/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"algo",label:"ALGO",text:"HBIPS-2 and HBIPS-3 processing flows carried forward from 2026A with no structural changes identified. UTD handling and strata assignment logic unchanged."},
+      {tag:"clar",label:"CLARIF",text:"TOC confirms HBIPS remains active in 2026B. Measures IMM-2, SUB-2, SUB-3, TOB-3 are marked 'Removed from ORYX, maintained through 2026 discharges' — HBIPS does not have this notation and remains in active ORYX use."},
+      {tag:"de",label:"DATA ELEM",text:"No new HBIPS-specific data elements identified in 2026B. Four age strata (1–12, 13–17, 18–64, ≥65) unchanged."}
+    ],
+    dataElements:[
+      {name:"Event Date",change:"same",note:"No change from 2026A"},
+      {name:"Psychiatric Care Setting",change:"same",note:"No change"},
+      {name:"Event Type",change:"same",note:"No change"},
+      {name:"Minutes of Physical Restraint",change:"same",note:"No change"},
+      {name:"Minutes of Seclusion",change:"same",note:"No change"},
+      {name:"Patient Age at Time of Event",change:"same",note:"Age = 0 reject logic from 2026A carried forward"}
+    ]
+  },
+  "2027A":{ label:"v2027A", period:"01-01-27 → 06-30-27", statusLabel:"Not yet released", color:"pending",
+    links:{},
+    changes:[
+      {tag:"new",label:"NOTE",text:"TJC has not yet published the 2027A specifications manual. When available, it will appear at manual.jointcommission.org/releases/TJC2027A/. Check back after TJC's typical September–October pre-year release window."},
+      {tag:"clar",label:"WATCH",text:"CMS IPFQR rulemaking for 2027 data reporting year may affect which HBIPS measures are required. Monitor CMS proposed rule (typically released April–May of prior year) alongside TJC spec updates."}
+    ],
+    dataElements:[]
+  }
+};
+MEASURES.hbips.compareData = {
+  "2025A→2026A":{ summary:"2026A introduced a new explicit reject path for age-zero events in the HBIPS IPP algorithm and clarified UTD handling in measure category assignment.",
+    rows:[
+      {element:"IPP — age zero reject",base:"Implicit (no specific reject)",target:"Explicit: if Patient Age = 0 → Reject Case Flag = Yes",change:"changed"},
+      {element:"UTD category assignment",base:"Implied Y category",target:"Explicitly documented as Y (in population, not numerator)",change:"changed"},
+      {element:"Event Date handling",base:"Same",target:"Same",change:"same"},
+      {element:"Strata (1–12, 13–17, 18–64, ≥65)",base:"No change",target:"No change",change:"same"},
+      {element:"HBIPS-2 restraint logic",base:"No change",target:"No change",change:"same"},
+      {element:"HBIPS-3 seclusion logic",base:"No change",target:"No change",change:"same"},
+      {element:"Census denominator note",base:"Present in data entry guide",target:"Reinforced explicitly in 2026A manual text",change:"changed"}
+    ]},
+  "2026A→2026B":{ summary:"2026B is a carry-forward release for HBIPS. No structural changes to algorithms or data elements from 2026A were identified. Mid-cycle update 2026A1 (same period as 2026A) also had no HBIPS logic changes.",
+    rows:[
+      {element:"IPP algorithm",base:"Age-zero explicit reject",target:"Identical",change:"same"},
+      {element:"HBIPS-2 logic",base:"No change",target:"Identical",change:"same"},
+      {element:"HBIPS-3 logic",base:"No change",target:"Identical",change:"same"},
+      {element:"All HBIPS data elements",base:"No change",target:"Identical — no new elements",change:"same"},
+      {element:"ORYX status",base:"Active",target:"Active (no removal notation)",change:"same"}
+    ]},
+  "2026B→2027A":{ summary:"v2027A has not been published. No comparison data is available. Monitor manual.jointcommission.org starting September 2026.",
+    rows:[{element:"All elements",base:"2026B confirmed",target:"Pending — not yet published",change:"pending"}]},
+  "2025A→2026B":{ summary:"From 2025A to 2026B, the primary HBIPS change was the age-zero explicit reject added in 2026A and carried through 2026B. Otherwise the measure set is stable.",
+    rows:[
+      {element:"IPP — age zero reject",base:"Implicit",target:"Explicit reject path",change:"changed"},
+      {element:"UTD category assignment",base:"Implied",target:"Explicitly documented as Y",change:"changed"},
+      {element:"Strata boundaries",base:"No change",target:"No change",change:"same"},
+      {element:"HBIPS-2 physical restraint",base:"No change",target:"No change",change:"same"},
+      {element:"HBIPS-3 seclusion",base:"No change",target:"No change",change:"same"}
+    ]},
+  "2025A→2027A":{ summary:"2027A is not yet published. Only 2025A→2026A changes are confirmed.",
+    rows:[{element:"All elements",base:"2025A",target:"Pending — 2027A not yet published",change:"pending"}]},
+  "2026A→2027A":{ summary:"2027A is not yet published.",
+    rows:[{element:"All elements",base:"2026A confirmed",target:"Pending",change:"pending"}]}
+};
+MEASURES.hbips.compareVersions = ["2025A","2026A","2026B","2027A"];
+MEASURES.hbips.sources = [
+  { org:"The Joint Commission", role:"Primary spec publisher — abstraction logic, algorithms, data elements, release notes",
+    links:[
+      {label:"Specs Manual landing page",url:"https://www.jointcommission.org/measurement/specification-manuals/chart-abstracted-measures/"},
+      {label:"PMN Q&A Forum (manual home)",url:"https://manual.jointcommission.org/"},
+      {label:"v2026A — HBIPS IPP",url:"https://manual.jointcommission.org/releases/TJC2026A/HospitalBasedInpatientPsychiatricServices.html"},
+      {label:"v2026B — HBIPS-2",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0117.html"},
+      {label:"v2026B — HBIPS-3",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0118.html"},
+      {label:"v2026B — TOC",url:"https://manual.jointcommission.org/releases/TJC2026B/TableOfContentsTJC.html"}
+    ]},
+  { org:"CMS / QualityNet", role:"IPFQR program requirements, reporting timelines, required measure lists",
+    links:[
+      {label:"Inpatient Specifications Manuals",url:"https://qualitynet.cms.gov/inpatient/specifications-manuals"},
+      {label:"IPFQR Program",url:"https://qualitynet.cms.gov/psych"}
+    ]},
+  { org:"Deep-link pattern for future releases", role:"When TJC publishes 2027A, swap the release code in the URL:",
+    links:[
+      {label:"v2027A — HBIPS IPP (anticipated)",url:"https://manual.jointcommission.org/releases/TJC2027A/HospitalBasedInpatientPsychiatricServices.html"}
+    ]}
+];
+
+/* ════════ STK DATA (researched from manual.jointcommission.org, TJC2025A–2026B) ════════ */
+MEASURES.stk.currentVersion = "2026B";
+MEASURES.stk.order = ["2025A","2026A","2026A1","2026B","2027A"];
+MEASURES.stk.releases = {
+  "2025A":{ label:"v2025A", period:"01-01-25 → 06-30-25", statusLabel:"Past / historical", color:"active",
+    links:{
+      "Stroke set":"https://manual.jointcommission.org/releases/TJC2025A/Stroke.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2025A/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"ipp",label:"IPP",text:"Baseline population: Patient Age ≥ 18 and Length of Stay ≤ 120 days, with the ICD-10-CM principal diagnosis placing the case in the Ischemic (Appendix A, Table 8.1) or Hemorrhagic (Table 8.2) sub-population. The two sub-populations are sampled independently."},
+      {tag:"algo",label:"ALGO",text:"Eight inpatient measures in the set: STK-1, 2, 3, 4, 5, 6, 8, 10. The population algorithm graphic is versioned v2021A — the IPP logic has been stable since 2021A."},
+      {tag:"de",label:"DATA ELEM",text:"Measure-specific elements for the antithrombotic / anticoagulation / statin measures (STK-2, 3, 5, 6) and their paired 'reason not prescribed / not administered' elements are all present, unchanged from prior years."}
+    ],
+    dataElements:[
+      {name:"Antithrombotic Therapy Prescribed at Discharge (STK-2)",change:"same",note:"No change"},
+      {name:"Anticoagulation Therapy Prescribed at Discharge (STK-3)",change:"same",note:"No change"},
+      {name:"Antithrombotic Therapy Administered by End of Hospital Day 2 (STK-5)",change:"same",note:"No change"},
+      {name:"Statin Medication Prescribed at Discharge (STK-6)",change:"same",note:"No change"},
+      {name:"Comfort Measures Only",change:"same",note:"Denominator exclusion across STK-1, 2, 3, 5, 6, 8, 10"}
+    ]
+  },
+  "2026A":{ label:"v2026A", period:"01-01-26 → 06-30-26", statusLabel:"Past (1H 2026)", color:"active",
+    links:{
+      "Stroke set":"https://manual.jointcommission.org/releases/TJC2026A/Stroke.html",
+      "STK-2":"https://manual.jointcommission.org/releases/TJC2026A/MIF0127.html",
+      "STK-5":"https://manual.jointcommission.org/releases/TJC2026A/MIF0130.html",
+      "STK-6":"https://manual.jointcommission.org/releases/TJC2026A/MIF0131.html",
+      "Data Dictionary":"https://manual.jointcommission.org/releases/TJC2026A/DataDictionaryIntroductionTJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026A/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"clar",label:"ORYX",text:"The big 2026 event was around STK, not to it: effective 01-01-2026, TJC removed ED-1, ED-2, IMM-2, SUB-2, SUB-3, TOB-3 and PC-01/02/05 from ORYX. STK was retained in active ORYX use — no STK measures were removed."},
+      {tag:"ipp",label:"IPP",text:"Population algorithm unchanged (still v2021A): age ≥ 18, LOS ≤ 120 days, Table 8.1 / 8.2 sub-population split, independent sampling."},
+      {tag:"algo",label:"ALGO",text:"All eight inpatient STK measures carried forward. STK-6 (statin at discharge) remains required for applicable TJC stroke certification programs."},
+      {tag:"de",label:"DATA ELEM",text:"No new STK-specific data elements identified. Element-level value-set details should be confirmed against the manual's official Summary of Changes for formal audit use."}
+    ],
+    dataElements:[
+      {name:"Antithrombotic Therapy Prescribed at Discharge (STK-2)",change:"same",note:"Carried forward"},
+      {name:"Reason for Not Prescribing Antithrombotic Therapy at Discharge (STK-2)",change:"same",note:"Carried forward"},
+      {name:"Anticoagulation Therapy Prescribed at Discharge (STK-3)",change:"same",note:"Carried forward"},
+      {name:"Antithrombotic Therapy Administered by End of Hospital Day 2 (STK-5)",change:"same",note:"Carried forward"},
+      {name:"Statin Medication Prescribed at Discharge (STK-6)",change:"same",note:"Carried forward"},
+      {name:"Comfort Measures Only",change:"same",note:"Exclusion unchanged"}
+    ]
+  },
+  "2026A1":{ label:"v2026A1", period:"01-01-26 → 06-30-26", statusLabel:"Mid-cycle (1H 2026)", color:"active",
+    links:{
+      "Stroke set":"https://manual.jointcommission.org/releases/TJC2026A1/Stroke.html",
+      "Appendix A (dx tables)":"https://manual.jointcommission.org/releases/TJC2026A1/AppendixATJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026A1/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"clar",label:"CLARIF",text:"Mid-cycle correction release covering the same 1Q26–2Q26 discharge period as 2026A. STK set composition, IPP algorithm, and measure-specific elements are identical to 2026A."},
+      {tag:"de",label:"DATA ELEM",text:"Confirmed STK-specific element set: antithrombotic (STK-2), anticoagulation + AF/Flutter (STK-3), day-2 antithrombotic (STK-5), statin (STK-6), the five education elements (STK-8), rehab assessment (STK-10), plus LKW / IV alteplase elements for STK-4."}
+    ],
+    dataElements:[
+      {name:"All STK data elements",change:"same",note:"No change from v2026A"}
+    ]
+  },
+  "2026B":{ label:"v2026B", period:"07-01-26 → 12-31-26", statusLabel:"Current (2H 2026)", color:"current",
+    links:{
+      "Stroke set":"https://manual.jointcommission.org/releases/TJC2026B/Stroke.html",
+      "STK-2":"https://manual.jointcommission.org/releases/TJC2026B/MIF0127.html",
+      "STK-5":"https://manual.jointcommission.org/releases/TJC2026B/MIF0130.html",
+      "STK-6":"https://manual.jointcommission.org/releases/TJC2026B/MIF0131.html",
+      "Appendix C (med tables)":"https://manual.jointcommission.org/releases/TJC2026B/AppendixCTJC.html",
+      "TOC":"https://manual.jointcommission.org/releases/TJC2026B/TableOfContentsTJC.html"
+    },
+    changes:[
+      {tag:"algo",label:"ALGO",text:"Carried forward from 2026A with no structural changes identified. The 2026B Table of Contents lists the ORYX removals (ED, IMM, SUB, TOB, PC-01/02/05) — STK is not among them and stays in active ORYX use."},
+      {tag:"ipp",label:"IPP",text:"Population logic unchanged: age ≥ 18, LOS ≤ 120 days, Table 8.1 / 8.2 sub-populations."},
+      {tag:"de",label:"DATA ELEM",text:"No new STK-specific data elements identified for 2026B. Appendix C medication tables remain the source for antithrombotic / anticoagulant / statin classification (STK-2, 3, 5, 6)."}
+    ],
+    dataElements:[
+      {name:"Antithrombotic Therapy Prescribed at Discharge (STK-2)",change:"same",note:"No change from 2026A"},
+      {name:"Anticoagulation Therapy Prescribed at Discharge (STK-3)",change:"same",note:"No change"},
+      {name:"Antithrombotic Therapy Administered by End of Hospital Day 2 (STK-5)",change:"same",note:"No change"},
+      {name:"Statin Medication Prescribed at Discharge (STK-6)",change:"same",note:"No change"},
+      {name:"Comfort Measures Only",change:"same",note:"Exclusion unchanged"}
+    ]
+  },
+  "2027A":{ label:"v2027A", period:"01-01-27 → 06-30-27", statusLabel:"Not yet released", color:"pending",
+    links:{},
+    changes:[
+      {tag:"new",label:"NOTE",text:"TJC has not published the 2027A manual yet. When posted, it will appear at manual.jointcommission.org/releases/TJC2027A/. Watch the September–October 2026 pre-year release window."},
+      {tag:"clar",label:"WATCH",text:"Check the 2027 ORYX requirements and any stroke-certification measure-table updates when 2027A drops — that's where measure-required-by-program changes tend to surface first."}
+    ],
+    dataElements:[]
+  }
+};
+MEASURES.stk.compareVersions = ["2025A","2026A","2026B","2027A"];
+MEASURES.stk.compareData = {
+  "2025A→2026A":{ summary:"STK itself carried forward from 2025A to 2026A — the IPP algorithm (v2021A) and all eight inpatient measures are unchanged. The notable 2026 change was around STK: TJC's 01-01-2026 ORYX slim-down removed several other sets (ED, IMM, SUB, TOB, PC-01/02/05) while STK was retained.",
+    rows:[
+      {element:"STK set composition (STK-1,2,3,4,5,6,8,10)",base:"8 inpatient measures",target:"8 inpatient measures — unchanged",change:"same"},
+      {element:"IPP algorithm",base:"v2021A (age ≥18, LOS ≤120, Table 8.1/8.2)",target:"v2021A — identical",change:"same"},
+      {element:"ORYX status",base:"Active",target:"Retained (others removed 1/1/2026)",change:"same"},
+      {element:"STK-2 / 3 / 5 / 6 elements",base:"Present",target:"Carried forward",change:"same"},
+      {element:"Element value-set details",base:"2025A",target:"Verify vs. official Summary of Changes",change:"pending"}
+    ]},
+  "2026A→2026B":{ summary:"2026B is a carry-forward for STK. No structural changes to the algorithm, measures, or STK-specific data elements were identified. STK is absent from the 2026B ORYX-removal list, so it remains in active use.",
+    rows:[
+      {element:"STK set composition",base:"8 inpatient measures",target:"Identical",change:"same"},
+      {element:"IPP algorithm",base:"v2021A",target:"Identical",change:"same"},
+      {element:"STK-2 / 3 / 5 / 6 elements",base:"No change",target:"Identical",change:"same"},
+      {element:"ORYX status",base:"Active",target:"Active (not in 2026B removal list)",change:"same"}
+    ]},
+  "2026B→2027A":{ summary:"v2027A is not yet published. Monitor manual.jointcommission.org from September 2026.",
+    rows:[{element:"All elements",base:"2026B confirmed",target:"Pending — not yet published",change:"pending"}]},
+  "2025A→2026B":{ summary:"Across the full 2025A→2026B span, the STK measure set is stable: same eight measures, same v2021A population algorithm, same measure-specific elements. The only material 2026 event was the ORYX removal of other sets, from which STK was spared.",
+    rows:[
+      {element:"STK set composition",base:"8 inpatient measures",target:"8 inpatient measures",change:"same"},
+      {element:"IPP algorithm",base:"v2021A",target:"v2021A",change:"same"},
+      {element:"ORYX participation",base:"Active",target:"Active (retained through 2026)",change:"same"}
+    ]},
+  "2025A→2027A":{ summary:"2027A is not yet published. Only the stable 2025A→2026B picture is confirmed.",
+    rows:[{element:"All elements",base:"2025A",target:"Pending — 2027A not yet published",change:"pending"}]},
+  "2026A→2027A":{ summary:"2027A is not yet published.",
+    rows:[{element:"All elements",base:"2026A confirmed",target:"Pending",change:"pending"}]}
+};
+MEASURES.stk.sources = [
+  { org:"The Joint Commission — Stroke (STK)", role:"Primary spec publisher: IPP algorithm, measure information forms, data elements, appendices",
+    links:[
+      {label:"Stroke set (v2026B)",url:"https://manual.jointcommission.org/releases/TJC2026B/Stroke.html"},
+      {label:"Manual home",url:"https://manual.jointcommission.org/"},
+      {label:"STK-2 — antithrombotic at discharge",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0127.html"},
+      {label:"STK-3 — anticoag for AF/flutter",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0128.html"},
+      {label:"STK-5 — antithrombotic by day 2",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0130.html"},
+      {label:"STK-6 — statin at discharge",url:"https://manual.jointcommission.org/releases/TJC2026B/MIF0131.html"},
+      {label:"Appendix A — dx tables 8.1 / 8.2",url:"https://manual.jointcommission.org/releases/TJC2026B/AppendixATJC.html"},
+      {label:"Appendix C — medication tables",url:"https://manual.jointcommission.org/releases/TJC2026B/AppendixCTJC.html"}
+    ]},
+  { org:"CMS / QualityNet", role:"Inpatient specifications manuals and stroke-certification context",
+    links:[
+      {label:"Inpatient specifications manuals",url:"https://qualitynet.cms.gov/inpatient/specifications-manuals"}
+    ]},
+  { org:"Deep-link pattern for future releases", role:"When TJC publishes 2027A, swap the release code in the URL:",
+    links:[
+      {label:"v2027A — Stroke set (anticipated)",url:"https://manual.jointcommission.org/releases/TJC2027A/Stroke.html"}
+    ]}
+];
+
+/* generic program-level sources for not-yet-populated measures */
+const PROGRAM_SOURCES = {
+  "TJC ORYX":[ {org:"The Joint Commission",role:"Chart-abstracted measure specs (A/B releases)",links:[
+    {label:"Chart-abstracted measures",url:"https://www.jointcommission.org/measurement/specification-manuals/chart-abstracted-measures/"},
+    {label:"Manual home",url:"https://manual.jointcommission.org/"}]} ],
+  "TJC ORYX / CMS IPFQR":[ {org:"The Joint Commission",role:"Chart-abstracted specs",links:[
+    {label:"Manual home",url:"https://manual.jointcommission.org/"}]} ],
+  "CMS IQR":[ {org:"CMS / QualityNet",role:"Inpatient Quality Reporting — chart-abstracted specs",links:[
+    {label:"Inpatient specifications manuals",url:"https://qualitynet.cms.gov/inpatient/specifications-manuals"}]} ],
+  "CMS OQR":[ {org:"CMS / QualityNet",role:"Outpatient Quality Reporting specs",links:[
+    {label:"Outpatient specifications manuals",url:"https://qualitynet.cms.gov/outpatient/specifications-manuals"}]} ],
+  "CMS survey":[ {org:"CMS — HCAHPS",role:"Survey instrument, protocols, and guidelines",links:[
+    {label:"HCAHPS official site",url:"https://hcahpsonline.org/"}]} ]
+};
+
+/* ════════ STATE ════════ */
+let selectedMeasure = "hbips";
+let selectedVersion = null;
+
+/* ════════ OVERVIEW ════════ */
+function renderOverview(){
+  const grid = document.getElementById("ovGrid");
+  const order = ["stk","cstk","asrip","sep1","hbips","pc06","oped","opstk","op29","hcahps"];
+  grid.innerHTML = order.map(id=>{
+    const m = MEASURES[id];
+    const status = m.populated
+      ? `<span class="ov-status done"><span class="dot"></span>${m.currentVersion} · ${m.order.length} tracked</span>`
+      : `<span class="ov-status todo"><span class="dot"></span>Not populated</span>`;
+    return `<div class="ov-card ${m.populated?'':'pending'}" onclick="gotoMeasure('${id}')" tabindex="0" role="button"
+      onkeydown="if(event.key==='Enter'||event.key===' ')gotoMeasure('${id}')">
+      <div class="ov-top">
+        <div class="ov-icon"><i class="ph-duotone ${m.icon}"></i></div>
+        <span class="ov-tag ${m.tag}">${m.label}</span>
+      </div>
+      <div class="ov-name">${m.label}</div>
+      <div class="ov-full">${m.full}</div>
+      <div class="ov-meta">
+        <span class="ov-prog">${m.program}</span>
+        ${status}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ════════ MEASURE BAR ════════ */
+function renderMeasureBar(){
+  document.getElementById("mbGroups").innerHTML = MEASURE_GROUPS.map(g=>`
+    <div class="mb-group">
+      <span class="mb-group-label">${g.label}</span>
+      ${g.ids.map(id=>{
+        const m = MEASURES[id];
+        return `<button class="mchip ${m.populated?'':'pending'} ${id===selectedMeasure?'active':''}"
+          onclick="selectMeasure('${id}')">${m.label}</button>`;
+      }).join("")}
+    </div>`).join("");
+}
+
+function selectMeasure(id){
+  selectedMeasure = id;
+  selectedVersion = null;
+  renderMeasureBar();
+  renderReleases();
+  renderCompare();
+  renderSources();
+}
+
+function gotoMeasure(id){
+  selectedMeasure = id;
+  selectedVersion = null;
+  switchTab("releases", document.querySelector('.tab[data-tab="releases"]'));
+  renderMeasureBar();
+}
+
+/* ════════ RELEASES ════════ */
+function placeholder(m, kind){
+  return `<div class="empty fadeUp">
+    <i class="ph-duotone ${m.icon}"></i>
+    <div class="et">${m.label} — ${kind} not populated yet</div>
+    <div class="ed">This preview only fills in HBIPS. Once the design is locked, ${m.label} (${m.program}) gets the same treatment. Here's what will show up:</div>
+    <ul>
+      <li><i class="ph ph-check"></i> One version card per release, with status and dates</li>
+      <li><i class="ph ph-check"></i> A "what changed" list and per-element diff table</li>
+      <li><i class="ph ph-check"></i> Deep links into the ${m.program.split(" ")[0]} source manual</li>
+    </ul>
+  </div>`;
+}
+
+function renderReleases(){
+  const m = MEASURES[selectedMeasure];
+  const el = document.getElementById("releasesBody");
+  if(!m.populated){ el.innerHTML = placeholder(m,"releases"); return; }
+
+  if(!selectedVersion){ selectedVersion = m.currentVersion || m.order[0]; }
+
+  const cards = m.order.map(key=>{
+    const r = m.releases[key];
+    const unavail = r.color==="pending";
+    return `<div class="version-card ${key===selectedVersion?'selected':''} ${unavail?'unavailable':''}"
+      ${unavail?'':`onclick="selectVersion('${key}')"`}>
+      <div class="vc-label">${m.program.split(" ")[0]} specs manual</div>
+      <div class="vc-version">${r.label}</div>
+      <div class="vc-dates">${r.period}</div>
+      <div class="vc-status ${r.color}"><span class="dot"></span>${r.statusLabel}</div>
+    </div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="cx info fadeUp">
+      <i class="ph ph-info"></i>
+      <span>TJC publishes two versions per year (A = Jan–Jun, B = Jul–Dec), plus occasional mid-cycle updates (e.g. 2026A1). Select a version to see its release notes and data-element changes.</span>
+    </div>
+    <div class="version-grid fadeUp">${cards}</div>
+    <div id="releaseDetail" class="fadeUp"></div>`;
+
+  renderDetail();
+}
+
+function selectVersion(key){ selectedVersion = key; renderReleases(); }
+
+function renderDetail(){
+  const m = MEASURES[selectedMeasure];
+  const r = m.releases[selectedVersion];
+  const linksHtml = Object.keys(r.links).length
+    ? Object.entries(r.links).map(([label,url])=>`<a class="speclink" href="${url}" target="_blank" rel="noopener"><i class="ph ph-arrow-square-out"></i>${label}</a>`).join("")
+    : `<span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);">Not yet published</span>`;
+
+  let body = `<div class="section-label">What changed in ${r.label}</div>`;
+  if(r.changes.length){
+    body += `<ul class="changes">` + r.changes.map(c=>`
+      <li><span class="ctag ct-${c.tag}">${c.label}</span><span>${c.text}</span></li>`).join("") + `</ul>`;
+  } else {
+    body += `<div style="color:var(--ink-soft);font-size:13px;padding:8px 0;">No changes recorded yet.</div>`;
+  }
+  if(r.dataElements.length){
+    body += `<div class="diff-wrap"><div class="section-label">Data elements — ${r.label}</div>
+      <table class="diff"><thead><tr><th>Data element</th><th>Change</th><th>Notes</th></tr></thead><tbody>` +
+      r.dataElements.map(d=>`<tr>
+        <td><span class="de-name">${d.name}</span></td>
+        <td><span class="v-${d.change}">${d.change==='same'?'— no change':d.change==='changed'?'✎ updated':d.change==='added'?'+ added':'✕ removed'}</span></td>
+        <td style="color:var(--ink-soft);">${d.note}</td></tr>`).join("") +
+      `</tbody></table></div>`;
+  }
+
+  document.getElementById("releaseDetail").innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><i class="ph-duotone ${m.icon}" style="color:var(--purple);font-size:18px;"></i> ${m.label} release notes <span class="vpill">${r.label}</span></div>
+        <div class="panel-links">${linksHtml}</div>
+      </div>
+      <div class="panel-body">${body}</div>
+    </div>`;
+}
+
+/* ════════ COMPARE ════════ */
+function renderCompare(){
+  const m = MEASURES[selectedMeasure];
+  const el = document.getElementById("compareBody");
+  if(!m.populated){ el.innerHTML = placeholder(m,"comparison"); return; }
+
+  const vers = m.compareVersions;
+  const opts = (sel)=>vers.map(v=>`<option value="${v}" ${v===sel?'selected':''}>v${v}</option>`).join("");
+  el.innerHTML = `
+    <div class="cmp-row fadeUp">
+      <label>Base</label>
+      <select id="cmpBase" onchange="renderDiff()">${opts(vers[0])}</select>
+      <label>vs</label>
+      <select id="cmpTarget" onchange="renderDiff()">${opts(vers[1])}</select>
+    </div>
+    <div id="diffOut" class="fadeUp"></div>`;
+  renderDiff();
+}
+
+function renderDiff(){
+  const m = MEASURES[selectedMeasure];
+  const base = document.getElementById("cmpBase").value;
+  const target = document.getElementById("cmpTarget").value;
+  const data = m.compareData[`${base}→${target}`] || m.compareData[`${target}→${base}`];
+  const out = document.getElementById("diffOut");
+  if(!data){ out.innerHTML = `<div class="empty"><i class="ph ph-git-diff"></i><div class="et">No comparison for these two versions</div></div>`; return; }
+  out.innerHTML = `
+    <div class="cx info"><i class="ph ph-info"></i><span>${data.summary}</span></div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">${m.label} changes <span class="vpill">v${base}</span> → <span class="vpill">v${target}</span></div></div>
+      <div class="panel-body" style="padding:0 16px 8px;">
+        <table class="diff"><thead><tr><th>Element</th><th>v${base}</th><th>v${target}</th></tr></thead><tbody>` +
+        data.rows.map(r=>`<tr>
+          <td><span class="de-name">${r.element}</span></td>
+          <td style="color:var(--ink-soft);">${r.base}</td>
+          <td class="v-${r.change==='same'?'same':r.change==='changed'?'changed':r.change==='pending'?'pending':'added'}">${r.target}</td>
+        </tr>`).join("") +
+        `</tbody></table>
+      </div>
+    </div>`;
+}
+
+/* ════════ SOURCES ════════ */
+function renderSources(){
+  const m = MEASURES[selectedMeasure];
+  const el = document.getElementById("sourcesBody");
+  const sources = m.populated ? m.sources : (PROGRAM_SOURCES[m.program] || []);
+  const note = m.populated
+    ? `Deep links for ${m.label}. TJC's manual needs a free PMN login for some sections; the release links below are public.`
+    : `${m.label} isn't populated yet — these are the program-level starting points. Per-release deep links get added when this measure is filled in.`;
+
+  el.innerHTML = `
+    <div class="cx warn fadeUp"><i class="ph ph-warning"></i><span>${note}</span></div>` +
+    (sources.length ? sources.map(s=>`
+      <div class="panel src-panel fadeUp">
+        <div class="panel-head"><div><div class="panel-title">${s.org}</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${s.role}</div></div></div>
+        <div class="src-links">
+          ${s.links.map(l=>`<a class="speclink" href="${l.url}" target="_blank" rel="noopener"><i class="ph ph-arrow-square-out"></i>${l.label}</a>`).join("")}
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><i class="ph ph-link-simple"></i><div class="et">No sources listed yet</div></div>`);
+}
+
+/* ════════ TABS ════════ */
+function switchTab(tab, btn){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  ["overview","releases","compare","sources"].forEach(id=>{
+    document.getElementById("tab-"+id).style.display = id===tab ? "" : "none";
+  });
+  document.getElementById("measureBar").style.display = tab==="overview" ? "none" : "";
+  if(tab==="releases") renderReleases();
+  if(tab==="compare") renderCompare();
+  if(tab==="sources") renderSources();
+}
+
+/* ════════ INIT ════════ */
+renderOverview();
+renderMeasureBar();
+</script>
+</body>
+</html>
