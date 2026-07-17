@@ -756,16 +756,16 @@ function stopBrownNoise(){
 // If the file is missing the card shows a "File not found" status
 // and clicking it is a no-op rather than crashing.
 
-const BASE = 'https://raw.githubusercontent.com/tannimon/tanni-tools-audio/main/';
+const BASE = 'https://raw.githubusercontent.com/tannimon/tannis-desk-tools/main/';
 const SOUNDS = [
   { id:'brown',        name:'Brown Noise',     icon:'ph-wave-sine',          file:null,                                                                                                            desc:'Built-in \xb7 always available' },
-  { id:'rain',         name:'Calming Rain',    icon:'ph-cloud-rain',         file:BASE+'liecio-calming-rain-257596.mp3',                                                                           desc:'1:48 \xb7 gentle rainfall' },
-  { id:'softfocus',    name:'Soft Focus',      icon:'ph-sun-horizon',        file:BASE+'chrisdjyogi-soft-focus-ambient-for-calm-work-sessions-457309.mp3',                                         desc:'4:32 \xb7 calm work sessions' },
-  { id:'soundscape',   name:'Soundscape',      icon:'ph-mountains',          file:BASE+'leberch-soundscape-ambient-254540.mp3',                                                                     desc:'4:32 \xb7 ambient texture' },
-  { id:'modernambient',name:'Modern Ambient',  icon:'ph-sparkle',            file:BASE+'mindfulliving-modern-ambient-focus-yoga-and-meditation-background-music-465649.mp3',                       desc:'4:33 \xb7 focus & meditation' },
-  { id:'piano',        name:'Ambient Piano',   icon:'ph-music-note',         file:BASE+'nickpanekaiassets-ambient-piano-instrumental-for-corporate-focus-229970.mp3',                              desc:'1:45 \xb7 instrumental focus' },
-  { id:'vibes',        name:'Relaxing Vibes',  icon:'ph-radio',              file:BASE+'pripac-relaxing-vibes-for-gaming-focus-323623.mp3',                                                        desc:'2:28 \xb7 lo-fi focus' },
-  { id:'deep',         name:'Deep Ambient',    icon:'ph-planet',             file:BASE+'quietphase-deep-ambient-489703.mp3',                                                                       desc:'6:48 \xb7 deep background' },
+  { id:'rain',         name:'Calming Rain',    icon:'ph-cloud-rain',         file:BASE+'audio/ambient/liecio-calming-rain-257596.mp3',                                                                           desc:'1:48 \xb7 gentle rainfall' },
+  { id:'softfocus',    name:'Soft Focus',      icon:'ph-sun-horizon',        file:BASE+'audio/ambient/chrisdjyogi-soft-focus-ambient-for-calm-work-sessions-457309.mp3',                                         desc:'4:32 \xb7 calm work sessions' },
+  { id:'soundscape',   name:'Soundscape',      icon:'ph-mountains',          file:BASE+'audio/ambient/leberch-soundscape-ambient-254540.mp3',                                                                     desc:'4:32 \xb7 ambient texture' },
+  { id:'modernambient',name:'Modern Ambient',  icon:'ph-sparkle',            file:BASE+'audio/ambient/mindfulliving-modern-ambient-focus-yoga-and-meditation-background-music-465649.mp3',                       desc:'4:33 \xb7 focus & meditation' },
+  { id:'piano',        name:'Ambient Piano',   icon:'ph-music-note',         file:BASE+'audio/ambient/nickpanekaiassets-ambient-piano-instrumental-for-corporate-focus-229970.mp3',                              desc:'1:45 \xb7 instrumental focus' },
+  { id:'vibes',        name:'Relaxing Vibes',  icon:'ph-radio',              file:BASE+'audio/ambient/pripac-relaxing-vibes-for-gaming-focus-323623.mp3',                                                        desc:'2:28 \xb7 lo-fi focus' },
+  { id:'deep',         name:'Deep Ambient',    icon:'ph-planet',             file:BASE+'audio/ambient/quietphase-deep-ambient-489703.mp3',                                                                       desc:'6:48 \xb7 deep background' },
 ];
 
 // Track which files actually exist so we can show a helpful status
@@ -904,11 +904,11 @@ document.getElementById('timerDisplay').textContent=secsToDisplay(focusMins*60);
    WORK JAMS — non-looping tracks
 ═══════════════════════════════════════ */
 const JAMS = [
-  { id:'case43',   title:'Case 43',                          file:BASE+'a1.mp3', duration:'4:24' },
-  { id:'sep1song', title:'Doing What I Do (The SEP-1 Song)', file:BASE+'a2.mp3', duration:'3:32' },
-  { id:'lactate',  title:'I Missed the Lactate',             file:BASE+'a3.mp3', duration:'4:27' },
-  { id:'legacy',   title:'Legacy Health',                    file:BASE+'a4.mp3', duration:'3:15' },
-  { id:'sepsisroad', title:'Sepsis Road',                    file:BASE+'a5.mp3', duration:'4:08' },
+  { id:'case43',   title:'Case 43',                          file:BASE+'audio/songs/a1.mp3', duration:'4:24' },
+  { id:'sep1song', title:'Doing What I Do (The SEP-1 Song)', file:BASE+'audio/songs/a2.mp3', duration:'3:32' },
+  { id:'lactate',  title:'I Missed the Lactate',             file:BASE+'audio/songs/a3.mp3', duration:'4:27' },
+  { id:'legacy',   title:'Legacy Health',                    file:BASE+'audio/songs/a4.mp3', duration:'3:15' },
+  { id:'sepsisroad', title:'Sepsis Road',                    file:BASE+'audio/songs/a5.mp3', duration:'4:08' },
 ];
 
 let activeJam = null;      // { id, audio, intervalId }

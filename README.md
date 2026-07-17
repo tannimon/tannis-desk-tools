@@ -1,10 +1,14 @@
+<p align="center">
+  <img src="hero-wordmark.svg" alt="Tanni's Desk Tools — decision-support tools for hospital core measure abstractors" width="100%">
+</p>
+
 # Tanni's Desk Tools
 
 A suite of browser-based utilities for TJC/CMS core-measure abstraction — spec tracking, medication sorting, timeline resolution, reporting deadlines, and a few things to keep the workday sane. Everything runs in the browser, no install.
 
-**Live site:** https://bit.ly/tannis-desk-tools
+**Live site:** https://tannimon.github.io/tannis-desk-tools/
 
-Open `tannis-desk-tools.html` — the hub — and launch any tool from there. Each tool is also a standalone, self-contained HTML file.
+Open `index.html` — the hub — and launch any tool from there. Each tool is also a standalone, self-contained HTML file.
 
 > Everything runs client-side. Tools that accept pasted or uploaded data (medication lists, fallout trackers) parse it in your browser — no backend, no server, nothing transmitted or stored. Follow your organization's policy before entering real PHI into any browser tool, including this one.
 
@@ -16,7 +20,7 @@ Open `tannis-desk-tools.html` — the hub — and launch any tool from there. Ea
 
 | File | |
 |---|---|
-| `tannis-desk-tools.html` | Launcher for everything below — sidebar nav, search, and card grid |
+| `index.html` | Launcher for everything below — sidebar nav, search, and card grid |
 
 **Stay Current**
 
@@ -71,11 +75,11 @@ Open `tannis-desk-tools.html` — the hub — and launch any tool from there. Ea
 
 ## Running locally
 
-No build step, no install. Clone and open `tannis-desk-tools.html` in a browser.
+No build step, no install. Clone and open `index.html` in a browser.
 
 ```bash
-git clone https://github.com/tannimon/tanni-tools-audio.git
-cd tanni-tools-audio
+git clone https://github.com/tannimon/tannis-desk-tools.git
+cd tannis-desk-tools
 ```
 
 Each tool is a single self-contained HTML file. Loaded from a CDN at runtime: Phosphor Icons, Google Fonts (DM Sans, DM Mono), SheetJS (spreadsheet parsing), and pdf-lib where needed.
