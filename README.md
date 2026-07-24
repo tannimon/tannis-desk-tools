@@ -88,6 +88,6 @@ Each tool is a single self-contained HTML file. Loaded from a CDN at runtime: Ph
 
 ## Built by
 
-Tanni — clinical quality abstractor, vibe code hobbiest, and web design enthusiast. She loves her dog, Sawyer.
+Tanni — clinical quality abstractor, vibe code hobbyist, and web design enthusiast. She loves her dog, Sawyer.
 
 Chief Morale Officer duties handled by Sawyer, who appears when you least expect him.
